@@ -18,9 +18,63 @@
       --steel:   #5a6a9a;   /* secondary text */
       --ring:    #1a2548;   /* ring fill — normal */
       --action:  #2e5fcc;   /* start button — cool blue */
-      --amber:   #6e4228;   /* warning state */
-      --red:     #5e2424;   /* danger state */
+      --amber:   #d07828;   /* warning state */
+      --red:     #c83838;   /* danger state */
+      --digit-scale: 1;
     }
+
+    /* ── Light theme ───────────────────────────────────────── */
+    body.light-theme {
+      --void:    #f4f3ef;
+      --surface: #eae9e4;
+      --border:  #d0cdc5;
+      --sep:     #a09890;
+      --label:   #807868;
+      --steel:   #585048;
+    }
+
+    body.light-theme #screen-timer {
+      background: radial-gradient(ellipse 62% 58% at 50% 50%, #eeecea 0%, var(--void) 72%);
+    }
+
+    body.light-theme .tool-btn {
+      background: rgba(0,0,0,0.04);
+    }
+
+    body.light-theme .tool-btn:hover {
+      background: rgba(0,0,0,0.09);
+      color: #1a1510;
+    }
+
+    /* ── Toolbar ───────────────────────────────────────────── */
+    .toolbar {
+      position: absolute;
+      top: 1rem;
+      right: 1.2rem;
+      display: flex;
+      gap: 0.35rem;
+      z-index: 10;
+    }
+
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.1rem;
+      height: 2.1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--steel);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .tool-btn:hover { background: rgba(255,255,255,0.07); color: var(--num); }
+    .tool-btn:disabled { opacity: 0.25; cursor: default; }
+    .tool-btn:disabled:hover { background: transparent; color: var(--steel); }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -130,6 +184,35 @@
       flex-shrink: 0;
     }
 
+    /* ── Format picker ─────────────────────────────────────── */
+    .fmt-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .fmt-btn {
+      flex: 1;
+      padding: 0.48rem 0.5rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--steel);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+
+    .fmt-btn.selected {
+      border-color: var(--action);
+      color: var(--num);
+      background: rgba(46, 95, 204, 0.1);
+    }
+
+    .fmt-btn:hover:not(.selected) { border-color: #262440; color: var(--num); }
+
     /* ── Color picker ──────────────────────────────────────── */
     .color-row {
       display: flex;
@@ -222,22 +305,22 @@
       align-items: center;
       font-family: 'DM Mono', monospace;
       font-weight: 300;
-      font-size: clamp(4.5rem, 17vmin, 10.5rem);
+      font-size: calc(clamp(4.5rem, 17vmin, 10.5rem) * var(--digit-scale));
       color: var(--num);
       line-height: 1;
       letter-spacing: -0.015em;
-      transition: color 0.9s ease, text-shadow 0.9s ease;
+      transition: color 0.9s ease, text-shadow 0.9s ease, font-size 0.25s ease;
       text-shadow: 0 0 70px rgba(194, 214, 255, 0.12);
     }
 
     #lbl-time.t-warn {
       color: var(--amber);
-      text-shadow: 0 0 70px rgba(192, 86, 24, 0.22);
+      text-shadow: 0 0 70px rgba(208, 120, 40, 0.40);
     }
 
     #lbl-time.t-danger {
       color: var(--red);
-      text-shadow: 0 0 70px rgba(184, 36, 36, 0.32);
+      text-shadow: 0 0 70px rgba(200, 56, 56, 0.50);
     }
 
     #lbl-time.t-done {
@@ -409,6 +492,63 @@
       #ring-fill  { transition: none !important; }
       .ov-glyph   { animation: none; opacity: 1; }
     }
+
+    /* ── Touch devices: キーボードヒントを非表示・タップ領域を拡大 ── */
+    @media (pointer: coarse) {
+      #kbd-hint { display: none; }
+
+      .tool-btn {
+        width: 2.6rem;
+        height: 2.6rem;
+      }
+
+      .btn-ctrl { padding-top: 0.85rem; padding-bottom: 0.85rem; }
+    }
+
+    /* ── Mobile portrait ────────────────────────────────────── */
+    @media (max-width: 600px) {
+      /* セットアップ画面の余白を詰める */
+      .field { margin-bottom: 1.4rem; }
+      .btn-go { margin-top: 1.6rem; }
+
+      /* リングを少し小さくして呼吸感を出す */
+      #ring-svg {
+        width: min(76vw, 76vh);
+        height: min(76vw, 76vh);
+      }
+
+      /* テスト名ラベルを小さく */
+      #lbl-name {
+        font-size: 1.1rem;
+        letter-spacing: 0.12em;
+        margin-bottom: 0.9rem;
+      }
+
+      /* コントロールの上余白を縮める */
+      .controls { margin-top: 1.8rem; }
+
+      /* 戻るボタンの上余白を縮める */
+      #btn-back { margin-top: 1.4rem; }
+
+      /* ツールバーを端に寄せる */
+      .toolbar { top: 0.6rem; right: 0.6rem; }
+
+      /* 終了オーバーレイのテキストを縮める */
+      .ov-title { font-size: 2.2rem; }
+      .ov-sub   { font-size: 0.95rem; }
+    }
+
+    /* ── Mobile landscape: 縦幅が狭いので全体を圧縮 ────────────── */
+    @media (max-height: 500px) {
+      #ring-svg {
+        width: min(72vh, 72vw);
+        height: min(72vh, 72vw);
+      }
+
+      #lbl-name { font-size: 0.9rem; margin-bottom: 0.4rem; }
+      .controls { margin-top: 0.9rem; }
+      #btn-back  { margin-top: 0.7rem; }
+    }
   </style>
 </head>
 <body>
@@ -427,11 +567,11 @@
   <div class="field">
     <label class="field-label">テスト時間</label>
     <div class="time-row">
-      <div class="time-unit">
+      <div class="time-unit" id="unit-h">
         <span class="unit-sub">時間</span>
         <input type="number" id="inp-h" min="0" max="23" value="0" />
       </div>
-      <span class="t-dot">:</span>
+      <span class="t-dot" id="dot-h">:</span>
       <div class="time-unit">
         <span class="unit-sub">分</span>
         <input type="number" id="inp-m" min="0" max="59" value="10" />
@@ -445,6 +585,14 @@
   </div>
 
   <div class="field">
+    <label class="field-label">表示形式</label>
+    <div class="fmt-row">
+      <button class="fmt-btn selected" data-fmt="hms" onclick="selectFmt(this)">時：分：秒</button>
+      <button class="fmt-btn" data-fmt="ms" onclick="selectFmt(this)">分：秒（最大99分）</button>
+    </div>
+  </div>
+
+  <div class="field">
     <label class="field-label">数字の色</label>
     <div class="color-row" id="color-row">
       <button class="swatch selected" data-color="#c2d6ff" style="background:#c2d6ff;color:#c2d6ff" title="アイスブルー" onclick="selectColor(this)"></button>
@@ -452,6 +600,8 @@
       <button class="swatch"          data-color="#d4b8ff" style="background:#d4b8ff;color:#d4b8ff" title="ラベンダー"    onclick="selectColor(this)"></button>
       <button class="swatch"          data-color="#ffd580" style="background:#ffd580;color:#ffd580" title="ゴールド"      onclick="selectColor(this)"></button>
       <button class="swatch"          data-color="#ff9f7f" style="background:#ff9f7f;color:#ff9f7f" title="コーラル"      onclick="selectColor(this)"></button>
+      <button class="swatch"          data-color="#2255cc" style="background:#2255cc;color:#2255cc" title="コバルト（白背景向け）"  onclick="selectColor(this)"></button>
+      <button class="swatch"          data-color="#1a9950" style="background:#1a9950;color:#1a9950" title="エメラルド（白背景向け）" onclick="selectColor(this)"></button>
     </div>
   </div>
 
@@ -479,7 +629,7 @@
       </filter>
     </defs>
     <!-- Dim track (always full circle) -->
-    <circle cx="200" cy="200" r="185"
+    <circle id="ring-track" cx="200" cy="200" r="185"
       fill="none" stroke="#0c1020" stroke-width="3"/>
     <!-- Remaining-time arc (depletes counter-clockwise from 12 o'clock) -->
     <circle id="ring-fill" cx="200" cy="200" r="185"
@@ -489,10 +639,22 @@
       filter="url(#glow)"
       style="stroke-dasharray:1162.4; stroke-dashoffset:0;
              transition: stroke-dashoffset 1s linear, stroke 0.9s ease;"/>
-    <!-- Inner accent ring — just visible enough to feel intentional -->
-    <circle cx="200" cy="200" r="174"
-      fill="none" stroke="#080c1a" stroke-width="1.5"/>
   </svg>
+
+  <!-- ── Toolbar ── -->
+  <div class="toolbar">
+    <button class="tool-btn" id="btn-font-down" onclick="changeFont(-1)" title="文字を小さく">A−</button>
+    <button class="tool-btn" id="btn-font-up"   onclick="changeFont(+1)" title="文字を大きく">A+</button>
+    <button class="tool-btn" id="btn-theme"     onclick="toggleTheme()"  title="背景切り替え">◑</button>
+    <button class="tool-btn" id="btn-fs"        onclick="toggleFullscreen()" title="全画面">
+      <svg id="fs-icon" width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1,4.5 1,1 4.5,1"/>
+        <polyline points="8.5,1 12,1 12,4.5"/>
+        <polyline points="12,8.5 12,12 8.5,12"/>
+        <polyline points="4.5,12 1,12 1,8.5"/>
+      </svg>
+    </button>
+  </div>
 
   <div class="timer-inner">
     <div id="lbl-name"></div>
@@ -520,6 +682,7 @@
 <script>
 // ── State ──────────────────────────────────────────────────────────
 let chosenColor = '#c2d6ff';
+let displayFmt = 'hms'; // 'hms' | 'ms'
 let totalSec = 0, remainSec = 0, hasHours = false;
 let timerID = null, running = false;
 let prevDigits = [];
@@ -530,6 +693,27 @@ let musicTimeout = null, musicNodes = [];
 
 // Ring geometry: r=185 → C = 2π × 185
 const RING_C = 1162.4;
+
+// ── Format picker ────────────────────────────────────────────────────
+function selectFmt(el) {
+  document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  displayFmt = el.dataset.fmt;
+  const hUnit = document.getElementById('unit-h');
+  const hDot  = document.getElementById('dot-h');
+  const inpM  = document.getElementById('inp-m');
+  if (displayFmt === 'ms') {
+    hUnit.style.display = 'none';
+    hDot.style.display  = 'none';
+    inpM.max = 99;
+    document.getElementById('inp-h').value = 0;
+  } else {
+    hUnit.style.display = '';
+    hDot.style.display  = '';
+    inpM.max = 59;
+    if (+inpM.value > 59) inpM.value = 59;
+  }
+}
 
 // ── Color picker ────────────────────────────────────────────────────
 function selectColor(el) {
@@ -581,13 +765,16 @@ function dimColor(hex) {
 function doSetup() {
   const name = document.getElementById('inp-name').value.trim() || 'テスト';
   const h = clamp(+document.getElementById('inp-h').value || 0, 0, 23);
-  const m = clamp(+document.getElementById('inp-m').value || 0, 0, 59);
+  const m = displayFmt === 'ms'
+    ? clamp(+document.getElementById('inp-m').value || 0, 0, 99)
+    : clamp(+document.getElementById('inp-m').value || 0, 0, 59);
   const s = clamp(+document.getElementById('inp-s').value || 0, 0, 59);
 
   totalSec = h * 3600 + m * 60 + s;
   if (totalSec <= 0) { alert('時間を入力してください'); return; }
+  if (displayFmt === 'ms' && totalSec > 5999) { alert('分：秒モードでは最大99分59秒まで設定できます'); return; }
 
-  hasHours = h > 0;
+  hasHours = displayFmt === 'hms' && h > 0;
   remainSec = totalSec;
   prevDigits = [];
 
@@ -677,7 +864,9 @@ function buildDigits() {
 // ── Render ──────────────────────────────────────────────────────────
 function renderTime(instant = false) {
   const h = Math.floor(remainSec / 3600);
-  const m = Math.floor((remainSec % 3600) / 60);
+  const m = displayFmt === 'ms'
+    ? Math.floor(remainSec / 60)
+    : Math.floor((remainSec % 3600) / 60);
   const s = remainSec % 60;
   const p2 = v => String(v).padStart(2, '0');
 
@@ -895,7 +1084,51 @@ function stopMusic() {
     if (audioCtx) { audioCtx.close(); audioCtx = null; masterGain = null; reverbNode = null; reverbGain = null; }
   }, 700);
   document.getElementById('overlay').classList.remove('show');
+
+  const lbl = document.getElementById('lbl-time');
+  lbl.className = '';
+  document.getElementById('ring-fill').style.stroke = 'var(--ring)';
+  document.querySelectorAll('#lbl-time .t-colon').forEach(el => el.style.color = 'var(--sep)');
 }
+
+// ── Font size ────────────────────────────────────────────────────────
+const FONT_STEPS = [0.6, 0.78, 1.0, 1.25, 1.55];
+let fontStepIdx = 2;
+
+function changeFont(dir) {
+  fontStepIdx = Math.max(0, Math.min(FONT_STEPS.length - 1, fontStepIdx + dir));
+  document.documentElement.style.setProperty('--digit-scale', FONT_STEPS[fontStepIdx]);
+  document.getElementById('btn-font-down').disabled = fontStepIdx === 0;
+  document.getElementById('btn-font-up').disabled   = fontStepIdx === FONT_STEPS.length - 1;
+}
+
+// ── Theme toggle ─────────────────────────────────────────────────────
+let isLight = false;
+
+function toggleTheme() {
+  isLight = !isLight;
+  document.body.classList.toggle('light-theme', isLight);
+  document.getElementById('ring-track').style.stroke = isLight ? '#ccc8be' : '#0c1020';
+}
+
+// ── Fullscreen ───────────────────────────────────────────────────────
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const icon = document.getElementById('fs-icon');
+  if (!icon) return;
+  if (document.fullscreenElement) {
+    icon.innerHTML = '<polyline points="4.5,1 4.5,4.5 1,4.5"/><polyline points="8.5,1 8.5,4.5 12,4.5"/><polyline points="12,8.5 8.5,8.5 8.5,12"/><polyline points="1,8.5 4.5,8.5 4.5,12"/>';
+  } else {
+    icon.innerHTML = '<polyline points="1,4.5 1,1 4.5,1"/><polyline points="8.5,1 12,1 12,4.5"/><polyline points="12,8.5 12,12 8.5,12"/><polyline points="4.5,12 1,12 1,8.5"/>';
+  }
+});
 
 // ── Utilities ───────────────────────────────────────────────────────
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -912,3 +1145,4 @@ document.querySelectorAll('#screen-setup input').forEach(el => {
 </script>
 </body>
 </html>
+

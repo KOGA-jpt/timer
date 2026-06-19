@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カウントダウンタイマー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ─────────────────────────────────────── */
+    :root {
+      --void:    #060710;   /* deep blue-black void */
+      --surface: #0d0c1c;   /* setup card */
+      --border:  #181628;   /* hairline borders */
+      --num:     #c2d6ff;   /* cold tungsten digit color */
+      --sep:     #181e38;   /* colon separators */
+      --label:   #38426a;   /* dim labels */
+      --steel:   #5a6a9a;   /* secondary text */
+      --ring:    #1a2548;   /* ring fill — normal */
+      --action:  #2e5fcc;   /* start button — cool blue */
+      --amber:   #6e4228;   /* warning state */
+      --red:     #5e2424;   /* danger state */
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--void);
+      color: var(--num);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── SETUP SCREEN ──────────────────────────────────────── */
+    #screen-setup {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2.6rem 2.4rem 2.2rem;
+      width: min(92vw, 380px);
+    }
+
+    .setup-wordmark {
+      text-align: center;
+      margin-bottom: 2.4rem;
+    }
+
+    .setup-wordmark h1 {
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      font-size: 0.8rem;
+      letter-spacing: 0.36em;
+      color: var(--steel);
+      text-transform: uppercase;
+    }
+
+    .field { margin-bottom: 1.9rem; }
+
+    .field-label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      color: var(--steel);
+      text-transform: uppercase;
+      margin-bottom: 0.7rem;
+    }
+
+    #inp-name {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--num);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      padding: 0.45rem 0;
+      outline: none;
+      transition: border-color 0.25s;
+    }
+
+    #inp-name::placeholder { color: var(--label); }
+    #inp-name:focus { border-bottom-color: var(--action); }
+
+    .time-row {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .time-unit { flex: 1; text-align: center; }
+
+    .unit-sub {
+      display: block;
+      font-size: 0.66rem;
+      letter-spacing: 0.16em;
+      color: var(--steel);
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
+    }
+
+    .time-unit input {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--num);
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      font-size: 1.8rem;
+      text-align: center;
+      padding: 0.28rem 0;
+      outline: none;
+      transition: border-color 0.25s;
+      -moz-appearance: textfield;
+    }
+
+    .time-unit input:focus { border-bottom-color: var(--action); }
+    .time-unit input::-webkit-inner-spin-button { display: none; }
+
+    .t-dot {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.2rem;
+      color: var(--sep);
+      padding: 0 0.2rem 0.42rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Color picker ──────────────────────────────────────── */
+    .color-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.4rem;
+    }
+
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    .swatch:hover { transform: scale(1.15); }
+
+    .swatch.selected {
+      box-shadow: 0 0 0 2px var(--void), 0 0 0 4px currentColor;
+    }
+
+    .btn-go {
+      display: block;
+      width: 100%;
+      margin-top: 2.2rem;
+      padding: 0.82rem;
+      background: var(--action);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: filter 0.2s, transform 0.14s;
+    }
+
+    .btn-go:hover  { filter: brightness(1.18); transform: translateY(-1px); }
+    .btn-go:active { transform: translateY(0); }
+
+    /* ── TIMER SCREEN ──────────────────────────────────────── */
+    #screen-timer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      /* subtle center glow: depth without a card */
+      background: radial-gradient(ellipse 62% 58% at 50% 50%, #080c1e 0%, var(--void) 72%);
+    }
+
+    /* The precision ring — SVG, centered, behind digits */
+    #ring-svg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(84vw, 84vh);
+      height: min(84vw, 84vh);
+      pointer-events: none;
+    }
+
+    .timer-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #lbl-name {
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      color: var(--steel);
+      text-transform: uppercase;
+      margin-bottom: 1.4rem;
+      min-height: 1em;
+    }
+
+    /* ── THE NUMBER ─────────────────────────────────────────── */
+    #lbl-time {
+      display: flex;
+      align-items: center;
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      font-size: clamp(4.5rem, 17vmin, 10.5rem);
+      color: var(--num);
+      line-height: 1;
+      letter-spacing: -0.015em;
+      transition: color 0.9s ease, text-shadow 0.9s ease;
+      text-shadow: 0 0 70px rgba(194, 214, 255, 0.12);
+    }
+
+    #lbl-time.t-warn {
+      color: var(--amber);
+      text-shadow: 0 0 70px rgba(192, 86, 24, 0.22);
+    }
+
+    #lbl-time.t-danger {
+      color: var(--red);
+      text-shadow: 0 0 70px rgba(184, 36, 36, 0.32);
+    }
+
+    #lbl-time.t-done {
+      color: #ffffff;
+      text-shadow: 0 0 90px rgba(255, 255, 255, 0.38);
+    }
+
+    .digit {
+      display: inline-block;
+      width: 0.61em;
+      text-align: center;
+      will-change: transform, opacity;
+    }
+
+    @keyframes digitDrop {
+      0%   { opacity: 0; transform: translateY(-0.22em); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .digit.tick {
+      animation: digitDrop 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .t-colon {
+      font-size: 0.46em;
+      color: var(--sep);
+      margin: 0 0.06em 0.04em;
+      line-height: 1;
+    }
+
+    /* ── CONTROLS ───────────────────────────────────────────── */
+    .controls {
+      display: flex;
+      gap: 0.65rem;
+      margin-top: 3rem;
+      align-items: center;
+    }
+
+    .btn-ctrl {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 7px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: filter 0.2s, transform 0.14s, background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-ctrl:hover  { filter: brightness(1.18); transform: translateY(-1px); }
+    .btn-ctrl:active { transform: translateY(0); }
+
+    #btn-toggle {
+      background: var(--action);
+      color: #fff;
+      padding: 0.7rem 2.8rem;
+    }
+
+    #btn-toggle.is-running {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--steel);
+    }
+
+    #btn-reset {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--label);
+      padding: 0.7rem 1.2rem;
+    }
+
+    #btn-reset:hover { color: var(--steel); border-color: #262440; }
+
+    #kbd-hint {
+      margin-top: 1rem;
+      font-size: 0.57rem;
+      letter-spacing: 0.16em;
+      color: var(--border);
+      text-transform: uppercase;
+    }
+
+    #btn-back {
+      display: block;
+      background: none;
+      border: none;
+      color: var(--label);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 2.4rem;
+      padding: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    #btn-back:hover { color: var(--steel); }
+
+    /* ── FINISH OVERLAY ─────────────────────────────────────── */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 7, 16, 0.93);
+      backdrop-filter: blur(18px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      z-index: 400;
+    }
+
+    #overlay.show { display: flex; }
+
+    .ov-glyph {
+      font-size: 1.8rem;
+      letter-spacing: 0.55rem;
+      color: var(--steel);
+      animation: glyphLift 3.8s ease-in-out infinite;
+    }
+
+    @keyframes glyphLift {
+      0%, 100% { transform: translateY(0); opacity: 0.55; }
+      50%       { transform: translateY(-9px); opacity: 1; }
+    }
+
+    .ov-title {
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      font-size: 3rem;
+      letter-spacing: 0.04em;
+      color: var(--num);
+      margin-top: 0.3rem;
+    }
+
+    .ov-sub {
+      font-size: 1.1rem;
+      letter-spacing: 0.2em;
+      color: var(--steel);
+      margin-bottom: 1.6rem;
+    }
+
+    .btn-mute {
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+      border-radius: 7px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.78rem 2.8rem;
+      cursor: pointer;
+      transition: background 0.22s, color 0.22s, transform 0.14s;
+    }
+
+    .btn-mute:hover { background: var(--red); color: #fff; transform: translateY(-1px); }
+    .btn-mute:active { transform: translateY(0); }
+
+    /* ── Accessibility ──────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      .digit.tick { animation: none; }
+      #ring-fill  { transition: none !important; }
+      .ov-glyph   { animation: none; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Setup ──────────────────────────────────── -->
+<div id="screen-setup">
+  <div class="setup-wordmark">
+    <h1>Countdown Timer</h1>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="inp-name">テスト名</label>
+    <input type="text" id="inp-name" placeholder="例：数学期末テスト" autocomplete="off" />
+  </div>
+
+  <div class="field">
+    <label class="field-label">テスト時間</label>
+    <div class="time-row">
+      <div class="time-unit">
+        <span class="unit-sub">時間</span>
+        <input type="number" id="inp-h" min="0" max="23" value="0" />
+      </div>
+      <span class="t-dot">:</span>
+      <div class="time-unit">
+        <span class="unit-sub">分</span>
+        <input type="number" id="inp-m" min="0" max="59" value="10" />
+      </div>
+      <span class="t-dot">:</span>
+      <div class="time-unit">
+        <span class="unit-sub">秒</span>
+        <input type="number" id="inp-s" min="0" max="59" value="0" />
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="field-label">数字の色</label>
+    <div class="color-row" id="color-row">
+      <button class="swatch selected" data-color="#c2d6ff" style="background:#c2d6ff;color:#c2d6ff" title="アイスブルー" onclick="selectColor(this)"></button>
+      <button class="swatch"          data-color="#a8f0c0" style="background:#a8f0c0;color:#a8f0c0" title="ミント"        onclick="selectColor(this)"></button>
+      <button class="swatch"          data-color="#d4b8ff" style="background:#d4b8ff;color:#d4b8ff" title="ラベンダー"    onclick="selectColor(this)"></button>
+      <button class="swatch"          data-color="#ffd580" style="background:#ffd580;color:#ffd580" title="ゴールド"      onclick="selectColor(this)"></button>
+      <button class="swatch"          data-color="#ff9f7f" style="background:#ff9f7f;color:#ff9f7f" title="コーラル"      onclick="selectColor(this)"></button>
+    </div>
+  </div>
+
+  <button class="btn-go" onclick="doSetup()">タイマーを設定する</button>
+</div>
+
+<!-- ── Timer ──────────────────────────────────── -->
+<div id="screen-timer">
+
+  <!--
+    Precision ring: a thin SVG circle that drains counter-clockwise
+    as time passes — like the dial face of a precision stopwatch.
+    r=185  →  circumference ≈ 1162.4
+  -->
+  <svg id="ring-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+        <feGaussianBlur stdDeviation="3" result="blur1"/>
+        <feGaussianBlur stdDeviation="6" result="blur2"/>
+        <feMerge>
+          <feMergeNode in="blur2"/>
+          <feMergeNode in="blur1"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <!-- Dim track (always full circle) -->
+    <circle cx="200" cy="200" r="185"
+      fill="none" stroke="#0c1020" stroke-width="3"/>
+    <!-- Remaining-time arc (depletes counter-clockwise from 12 o'clock) -->
+    <circle id="ring-fill" cx="200" cy="200" r="185"
+      fill="none" stroke="#1a2548" stroke-width="2.5"
+      stroke-linecap="round"
+      transform="rotate(-90 200 200)"
+      filter="url(#glow)"
+      style="stroke-dasharray:1162.4; stroke-dashoffset:0;
+             transition: stroke-dashoffset 1s linear, stroke 0.9s ease;"/>
+    <!-- Inner accent ring — just visible enough to feel intentional -->
+    <circle cx="200" cy="200" r="174"
+      fill="none" stroke="#080c1a" stroke-width="1.5"/>
+  </svg>
+
+  <div class="timer-inner">
+    <div id="lbl-name"></div>
+    <!-- Digits injected by JS as individual spans for animation -->
+    <div id="lbl-time"></div>
+
+    <div class="controls">
+      <button class="btn-ctrl" id="btn-toggle" onclick="toggleTimer()">開始</button>
+      <button class="btn-ctrl" id="btn-reset"  onclick="resetTimer()">リセット</button>
+    </div>
+
+    <div id="kbd-hint">Space — 開始 / 停止　　R — リセット</div>
+    <button id="btn-back" onclick="goBack()">← 設定に戻る</button>
+  </div>
+</div>
+
+<!-- ── Finish overlay ─────────────────────────── -->
+<div id="overlay">
+  <div class="ov-glyph">♩ ♪ ♫</div>
+  <div class="ov-title">時間です</div>
+  <div class="ov-sub">ペンをおいてください</div>
+  <button class="btn-mute" onclick="stopMusic()">音を止める</button>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let chosenColor = '#c2d6ff';
+let totalSec = 0, remainSec = 0, hasHours = false;
+let timerID = null, running = false;
+let prevDigits = [];
+
+// Audio
+let audioCtx = null, masterGain = null, reverbNode = null, reverbGain = null;
+let musicTimeout = null, musicNodes = [];
+
+// Ring geometry: r=185 → C = 2π × 185
+const RING_C = 1162.4;
+
+// ── Color picker ────────────────────────────────────────────────────
+function selectColor(el) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  chosenColor = el.dataset.color;
+}
+
+// 選択色の中間トーン（テスト名用：同系色・やや暗め）
+function midColor(hex) {
+  const r = parseInt(hex.slice(1,3), 16) / 255;
+  const g = parseInt(hex.slice(3,5), 16) / 255;
+  const b = parseInt(hex.slice(5,7), 16) / 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (d > 0) {
+    s = d / (l > 0.5 ? 2 - max - min : max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `hsl(${Math.round(h * 360)}, ${Math.round(s * 50)}%, 45%)`;
+}
+
+// 選択色のトーンを落とした ring 色を計算（同系色・暗め・くすみ）
+function dimColor(hex) {
+  const r = parseInt(hex.slice(1,3), 16) / 255;
+  const g = parseInt(hex.slice(3,5), 16) / 255;
+  const b = parseInt(hex.slice(5,7), 16) / 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (d > 0) {
+    s = d / (l > 0.5 ? 2 - max - min : max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  // 同じ色相、彩度を約65%、明度を 25% 前後に落とす
+  return `hsl(${Math.round(h * 360)}, ${Math.round(s * 65)}%, 25%)`;
+}
+
+// ── Setup ───────────────────────────────────────────────────────────
+function doSetup() {
+  const name = document.getElementById('inp-name').value.trim() || 'テスト';
+  const h = clamp(+document.getElementById('inp-h').value || 0, 0, 23);
+  const m = clamp(+document.getElementById('inp-m').value || 0, 0, 59);
+  const s = clamp(+document.getElementById('inp-s').value || 0, 0, 59);
+
+  totalSec = h * 3600 + m * 60 + s;
+  if (totalSec <= 0) { alert('時間を入力してください'); return; }
+
+  hasHours = h > 0;
+  remainSec = totalSec;
+  prevDigits = [];
+
+  document.documentElement.style.setProperty('--num', chosenColor);
+  document.documentElement.style.setProperty('--ring', dimColor(chosenColor));
+  document.documentElement.style.setProperty('--sep', dimColor(chosenColor));
+
+  document.getElementById('lbl-name').textContent = name;
+  document.getElementById('lbl-name').style.color = midColor(chosenColor);
+  document.querySelector('.ov-sub').style.color = midColor(chosenColor);
+  document.querySelector('.ov-glyph').style.color = midColor(chosenColor);
+  document.getElementById('screen-setup').style.display = 'none';
+  document.getElementById('screen-timer').style.display = 'flex';
+
+  setBtn('ready');
+  buildDigits();
+  renderTime(true);
+}
+
+function goBack() {
+  pauseTimer();
+  stopMusic();
+  document.getElementById('screen-setup').style.display = '';
+  document.getElementById('screen-timer').style.display = 'none';
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ── Timer control ───────────────────────────────────────────────────
+function toggleTimer() { running ? pauseTimer() : startTimer(); }
+
+function startTimer() {
+  if (remainSec <= 0) return;
+  initAudio();
+  running = true;
+  setBtn('running');
+  timerID = setInterval(() => {
+    remainSec--;
+    renderTime();
+    if (remainSec <= 0) { clearInterval(timerID); running = false; onFinish(); }
+  }, 1000);
+}
+
+function pauseTimer() {
+  running = false;
+  clearInterval(timerID);
+  setBtn('paused');
+}
+
+function resetTimer() {
+  pauseTimer();
+  remainSec = totalSec;
+  prevDigits = [];
+  setBtn('ready');
+  buildDigits();
+  renderTime(true);
+}
+
+function setBtn(state) {
+  const b = document.getElementById('btn-toggle');
+  b.classList.remove('is-running');
+  if (state === 'running')     { b.textContent = '停止'; b.classList.add('is-running'); }
+  else if (state === 'paused') { b.textContent = '再開'; }
+  else                         { b.textContent = '開始'; }
+}
+
+// ── Digit DOM ───────────────────────────────────────────────────────
+function buildDigits() {
+  const el = document.getElementById('lbl-time');
+  el.innerHTML = '';
+  const groups = hasHours ? 3 : 2;
+  for (let g = 0; g < groups; g++) {
+    if (g > 0) {
+      const sep = document.createElement('span');
+      sep.className = 't-colon';
+      sep.textContent = ':';
+      el.appendChild(sep);
+    }
+    for (let d = 0; d < 2; d++) {
+      const span = document.createElement('span');
+      span.className = 'digit';
+      span.textContent = '0';
+      el.appendChild(span);
+    }
+  }
+}
+
+// ── Render ──────────────────────────────────────────────────────────
+function renderTime(instant = false) {
+  const h = Math.floor(remainSec / 3600);
+  const m = Math.floor((remainSec % 3600) / 60);
+  const s = remainSec % 60;
+  const p2 = v => String(v).padStart(2, '0');
+
+  const str = hasHours
+    ? `${p2(h)}${p2(m)}${p2(s)}`
+    : `${p2(m)}${p2(s)}`;
+  const chars = [...str];
+
+  // Animate changed digits
+  const spans = Array.from(document.querySelectorAll('#lbl-time .digit'));
+  chars.forEach((c, i) => {
+    if (prevDigits[i] !== c) {
+      spans[i].textContent = c;
+      if (!instant) {
+        spans[i].classList.remove('tick');
+        void spans[i].offsetWidth; // force reflow for animation restart
+        spans[i].classList.add('tick');
+      }
+    }
+  });
+  prevDigits = [...chars];
+
+  // Color state based on remaining ratio
+  const ratio = totalSec > 0 ? remainSec / totalSec : 0;
+  const lbl  = document.getElementById('lbl-time');
+  const ring = document.getElementById('ring-fill');
+
+  let colonColor;
+  if (remainSec <= 0)     { lbl.className = 't-done';   ring.style.stroke = 'var(--red)';   colonColor = 'var(--red)'; }
+  else if (ratio <= 0.1)  { lbl.className = 't-danger'; ring.style.stroke = 'var(--red)';   colonColor = 'var(--red)'; }
+  else if (ratio <= 0.25) { lbl.className = 't-warn';   ring.style.stroke = 'var(--amber)'; colonColor = 'var(--amber)'; }
+  else                    { lbl.className = '';          ring.style.stroke = 'var(--ring)';  colonColor = 'var(--sep)'; }
+  document.querySelectorAll('#lbl-time .t-colon').forEach(el => el.style.color = colonColor);
+
+  // Ring offset: 0 = full ring, RING_C = empty
+  const offset = RING_C * (1 - ratio);
+  if (instant) {
+    // Skip transition on init / reset so it doesn't animate from previous state
+    ring.style.transition = 'none';
+    ring.style.strokeDashoffset = offset;
+    void ring.offsetWidth;
+    ring.style.transition = 'stroke-dashoffset 1s linear, stroke 0.9s ease';
+  } else {
+    ring.style.strokeDashoffset = offset;
+  }
+}
+
+function onFinish() {
+  document.getElementById('overlay').classList.add('show');
+  playCanon();
+}
+
+// ── Audio: Pachelbel's Canon in D, improved music-box timbre ────────
+function initAudio() {
+  if (audioCtx) { if (audioCtx.state === 'suspended') audioCtx.resume(); return; }
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.52;
+  masterGain.connect(audioCtx.destination);
+
+  // Convolution reverb with pre-delay for depth
+  reverbNode = audioCtx.createConvolver();
+  reverbNode.buffer = makeImpulse(2.4, 3.2);
+  reverbGain = audioCtx.createGain();
+  reverbGain.gain.value = 0.28;
+  reverbNode.connect(reverbGain);
+  reverbGain.connect(masterGain);
+}
+
+// Reverb impulse with pre-delay (first 25ms silence → natural room feel)
+function makeImpulse(duration, decayRate) {
+  const sr       = audioCtx.sampleRate;
+  const len      = Math.floor(sr * duration);
+  const preDelay = Math.floor(sr * 0.025);
+  const buf      = audioCtx.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      if (i < preDelay) { d[i] = 0; continue; }
+      const t = (i - preDelay) / (len - preDelay);
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decayRate);
+    }
+  }
+  return buf;
+}
+
+function playNote(freq, t, dur, vol) {
+  if (!audioCtx || !masterGain) return;
+
+  // Humanize velocity ±8%
+  const v = vol * (0.92 + Math.random() * 0.16);
+
+  // Slight stereo spread per note
+  const pan = audioCtx.createStereoPanner();
+  pan.pan.value = (Math.random() - 0.5) * 0.35;
+
+  const g = audioCtx.createGain();
+
+  // Fundamental — slight random detune for analog warmth
+  const o1 = audioCtx.createOscillator();
+  o1.type = 'sine';
+  o1.frequency.value = freq;
+  o1.detune.value = (Math.random() - 0.5) * 4;
+  o1.connect(g);
+
+  // 2nd harmonic — body
+  const o2 = audioCtx.createOscillator();
+  const g2 = audioCtx.createGain();
+  o2.type = 'sine'; o2.frequency.value = freq * 2;
+  o2.detune.value = (Math.random() - 0.5) * 3;
+  g2.gain.value = 0.28;
+  o2.connect(g2); g2.connect(g);
+
+  // 3rd harmonic — metallic "ting"; decays fast like a real tine
+  const o3 = audioCtx.createOscillator();
+  const g3 = audioCtx.createGain();
+  o3.type = 'sine'; o3.frequency.value = freq * 3;
+  g3.gain.value = 0.13;
+  o3.connect(g3); g3.connect(g);
+
+  // 4th harmonic — shimmer; decays fastest
+  const o4 = audioCtx.createOscillator();
+  const g4 = audioCtx.createGain();
+  o4.type = 'sine'; o4.frequency.value = freq * 4;
+  g4.gain.value = 0.055;
+  o4.connect(g4); g4.connect(g);
+
+  // Route: note → pan → dry + reverb
+  g.connect(pan);
+  pan.connect(masterGain);
+  if (reverbNode) g.connect(reverbNode);
+
+  // Envelope — sharp strike, quick initial settle, long ring-out
+  const ring      = Math.min(dur * 2.4, 3.2);
+  const ringShort = Math.min(dur * 1.0, 1.1); // upper harmonics fade faster
+
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(v, t + 0.003);
+  g.gain.exponentialRampToValueAtTime(v * 0.30, t + 0.055);
+  g.gain.exponentialRampToValueAtTime(0.001, t + ring);
+
+  // Upper harmonics: separate faster envelopes
+  g3.gain.setValueAtTime(0.13, t + 0.003);
+  g3.gain.exponentialRampToValueAtTime(0.001, t + ringShort);
+
+  g4.gain.setValueAtTime(0.055, t + 0.003);
+  g4.gain.exponentialRampToValueAtTime(0.001, t + ringShort * 0.6);
+
+  const stop = t + ring + 0.06;
+  [o1, o2, o3, o4].forEach(o => { o.start(t); o.stop(stop); });
+  musicNodes.push(o1, o2, o3, o4, pan);
+}
+
+// Canon parameters
+const BPM = 72, Q = 60 / BPM, E = Q / 2;
+const hz = n => 440 * Math.pow(2, n / 12); // equal temperament from A4
+
+const N = {
+  D3: hz(-27), FS3: hz(-23), G3: hz(-22), A3: hz(-20), B3: hz(-18),
+  FS4: hz(-11), G4: hz(-10), A4: hz(-8),  B4: hz(-6),  CS5: hz(-4),
+  D5:  hz(-3),  E5:  hz(-1), FS5: hz(1),  G5: hz(2),   A5: hz(4),
+};
+
+// Ground bass: D–A–B–F#–G–D–G–A  (classic ostinato)
+const BASS = [
+  [N.D3,Q,.22],[N.A3,Q,.22],[N.B3,Q,.22],[N.FS3,Q,.22],
+  [N.G3,Q,.22],[N.D3,Q,.22],[N.G3,Q,.22],[N.A3,Q,.22],
+];
+
+// Melody — 8 bars (32 quarter-note beats); bass repeats 4× underneath
+const MEL = [
+  // Bars 1–4: quarter-note theme (most recognizable line)
+  [N.FS5,Q,.52],[N.E5,Q,.52],[N.D5,Q,.52],[N.CS5,Q,.52],
+  [N.B4,Q,.52],[N.A4,Q,.52],[N.B4,Q,.52],[N.CS5,Q,.52],
+  [N.D5,Q,.52],[N.CS5,Q,.52],[N.B4,Q,.52],[N.A4,Q,.52],
+  [N.G4,Q,.52],[N.FS4,Q,.52],[N.G4,Q,.52],[N.A4,Q,.52],
+  // Bars 5–6: eighth-note ascending/descending runs
+  [N.FS4,E,.44],[N.G4,E,.44],[N.A4,E,.44],[N.B4,E,.44],
+  [N.CS5,E,.44],[N.D5,E,.44],[N.E5,E,.44],[N.FS5,E,.44],
+  [N.G5,E,.44],[N.FS5,E,.44],[N.E5,E,.44],[N.D5,E,.44],
+  [N.CS5,E,.44],[N.D5,E,.44],[N.B4,E,.44],[N.CS5,E,.44],
+  // Bars 7–8
+  [N.A4,E,.44],[N.B4,E,.44],[N.CS5,E,.44],[N.D5,E,.44],
+  [N.E5,E,.44],[N.FS5,E,.44],[N.G5,E,.44],[N.A5,E,.44],
+  [N.FS5,E,.44],[N.E5,E,.44],[N.D5,E,.44],[N.CS5,E,.44],
+  [N.B4,E,.44],[N.CS5,E,.44],[N.A4,E,.44],[N.B4,E,.44],
+];
+
+function playCanon() {
+  if (!audioCtx) return;
+  const t0     = audioCtx.currentTime + 0.15;
+  const melLen = MEL.reduce((a, [, d]) => a + d, 0);
+
+  // Schedule melody
+  let mt = t0;
+  for (const [f, d, v] of MEL) { playNote(f, mt, d, v); mt += d; }
+
+  // Schedule bass (repeats as needed to fill melody length)
+  let bt = t0, bi = 0;
+  while (bt < t0 + melLen - 0.01) {
+    const [f, d, v] = BASS[bi++ % BASS.length];
+    playNote(f, bt, d, v); bt += d;
+  }
+
+  musicTimeout = setTimeout(playCanon, (melLen - 0.12) * 1000);
+}
+
+function stopMusic() {
+  clearTimeout(musicTimeout); musicTimeout = null;
+  if (masterGain) masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.15);
+  setTimeout(() => {
+    musicNodes.forEach(n => { try { n.stop(); } catch (_) {} });
+    musicNodes = [];
+    if (audioCtx) { audioCtx.close(); audioCtx = null; masterGain = null; reverbNode = null; reverbGain = null; }
+  }, 700);
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ── Utilities ───────────────────────────────────────────────────────
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('screen-timer').style.display !== 'flex') return;
+  if (e.code === 'Space') { e.preventDefault(); toggleTimer(); }
+  if (e.code === 'KeyR')  { resetTimer(); }
+});
+
+document.querySelectorAll('#screen-setup input').forEach(el => {
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') doSetup(); });
+});
+</script>
+</body>
+</html>

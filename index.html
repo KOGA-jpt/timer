@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>カウントダウンタイマー</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Inter:wght@300;400;500&family=Poppins:wght@300&family=Oswald:wght@300&family=Rajdhani:wght@300&family=Orbitron:wght@400&display=swap" rel="stylesheet">
+  <!-- DSEG: 7セグメント液晶フォント (SIL OFL) -->
+  <link href="https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css" rel="stylesheet">
   <style>
     /* ── Design tokens ─────────────────────────────────────── */
     :root {
@@ -13,14 +15,16 @@
       --surface: #0d0c1c;   /* setup card */
       --border:  #181628;   /* hairline borders */
       --num:     #c2d6ff;   /* cold tungsten digit color */
-      --sep:     #181e38;   /* colon separators */
+      --sep:     #4a5a94;   /* colon separators */
       --label:   #38426a;   /* dim labels */
       --steel:   #5a6a9a;   /* secondary text */
       --ring:    #1a2548;   /* ring fill — normal */
       --action:  #2e5fcc;   /* start button — cool blue */
-      --amber:   #d07828;   /* warning state */
-      --red:     #c83838;   /* danger state */
+      --amber:   #ffb054;   /* warning state */
+      --red:     #ff6b6b;   /* danger state */
       --digit-scale: 1;
+      --digit-font: 'Inter', sans-serif;
+      --digit-w: 0.61em;
     }
 
     /* ── Light theme ───────────────────────────────────────── */
@@ -84,17 +88,25 @@
       color: var(--num);
       min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 1.2rem 0;
     }
 
     /* ── SETUP SCREEN ──────────────────────────────────────── */
     #screen-setup {
+      position: relative;
+      /* margin:auto = 収まるときは中央、はみ出すときは切れずにスクロール */
+      margin: auto;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 2.6rem 2.4rem 2.2rem;
-      width: min(92vw, 380px);
+      width: min(92vw, 430px);
+    }
+
+    .setup-theme {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
     }
 
     .setup-wordmark {
@@ -105,7 +117,7 @@
     .setup-wordmark h1 {
       font-family: 'DM Mono', monospace;
       font-weight: 300;
-      font-size: 0.8rem;
+      font-size: 0.95rem;
       letter-spacing: 0.36em;
       color: var(--steel);
       text-transform: uppercase;
@@ -115,7 +127,7 @@
 
     .field-label {
       display: block;
-      font-size: 0.72rem;
+      font-size: 0.92rem;
       letter-spacing: 0.22em;
       color: var(--steel);
       text-transform: uppercase;
@@ -130,7 +142,7 @@
       border-bottom: 1px solid var(--border);
       color: var(--num);
       font-family: 'Inter', sans-serif;
-      font-size: 1rem;
+      font-size: 1.3rem;
       font-weight: 400;
       padding: 0.45rem 0;
       outline: none;
@@ -149,7 +161,7 @@
 
     .unit-sub {
       display: block;
-      font-size: 0.66rem;
+      font-size: 0.85rem;
       letter-spacing: 0.16em;
       color: var(--steel);
       text-transform: uppercase;
@@ -159,26 +171,56 @@
     .time-unit input {
       display: block;
       width: 100%;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       color: var(--num);
-      font-family: 'DM Mono', monospace;
+      font-family: var(--digit-font);
+      font-variant-numeric: tabular-nums;
       font-weight: 300;
-      font-size: 1.8rem;
+      font-size: 2.2rem;
       text-align: center;
-      padding: 0.28rem 0;
+      padding: 0.28rem 0.1rem;
       outline: none;
-      transition: border-color 0.25s;
+      cursor: text;
+      transition: border-color 0.25s, background 0.25s;
       -moz-appearance: textfield;
     }
 
-    .time-unit input:focus { border-bottom-color: var(--action); }
+    .time-unit input:hover { border-color: #2a3454; }
+    .time-unit input:focus { border-color: var(--action); background: rgba(255,255,255,0.07); }
+
+    body.light-theme .time-unit input { background: rgba(0,0,0,0.04); }
+    body.light-theme .time-unit input:hover { border-color: #a8a094; }
+    body.light-theme .time-unit input:focus { background: rgba(0,0,0,0.02); }
     .time-unit input::-webkit-inner-spin-button { display: none; }
+
+    /* ── Time presets ──────────────────────────────────────── */
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.9rem;
+    }
+
+    .preset-btn {
+      flex: 1 1 calc(25% - 0.4rem);
+      padding: 0.42rem 0.2rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--steel);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .preset-btn:hover { border-color: #262440; color: var(--num); }
 
     .t-dot {
       font-family: 'DM Mono', monospace;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       color: var(--sep);
       padding: 0 0.2rem 0.42rem;
       flex-shrink: 0;
@@ -198,7 +240,7 @@
       border-radius: 6px;
       color: var(--steel);
       font-family: 'DM Mono', monospace;
-      font-size: 0.68rem;
+      font-size: 0.85rem;
       font-weight: 300;
       letter-spacing: 0.06em;
       cursor: pointer;
@@ -221,8 +263,8 @@
     }
 
     .swatch {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       border: 2px solid transparent;
       cursor: pointer;
@@ -237,6 +279,48 @@
       box-shadow: 0 0 0 2px var(--void), 0 0 0 4px currentColor;
     }
 
+    /* ── Font picker ───────────────────────────────────────── */
+    .font-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .font-btn {
+      flex: 1 1 calc(33.3% - 0.5rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.55rem 0.3rem 0.45rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--num);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .font-btn .fb-sample {
+      font-size: 1.35rem;
+      font-weight: 300;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .font-btn .fb-name {
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: var(--steel);
+    }
+
+    .font-btn.selected {
+      border-color: var(--action);
+      background: rgba(46, 95, 204, 0.1);
+    }
+
+    .font-btn:hover:not(.selected) { border-color: #262440; }
+
     .btn-go {
       display: block;
       width: 100%;
@@ -247,7 +331,7 @@
       border: none;
       border-radius: 8px;
       font-family: 'Inter', sans-serif;
-      font-size: 0.82rem;
+      font-size: 1rem;
       font-weight: 500;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -257,6 +341,61 @@
 
     .btn-go:hover  { filter: brightness(1.18); transform: translateY(-1px); }
     .btn-go:active { transform: translateY(0); }
+
+    /* ── Advanced settings (collapsible) ───────────────────── */
+    .adv-toggle {
+      display: block;
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.6rem 0 0.2rem;
+      background: transparent;
+      border: none;
+      border-top: 1px solid var(--border);
+      color: var(--steel);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-align: center;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .adv-toggle:hover { color: var(--num); }
+
+    .field-color { margin-top: 1.9rem; margin-bottom: 0.4rem; }
+
+    #adv-body { display: none; margin-top: 1.5rem; }
+    #adv-body.open { display: block; }
+    #adv-body .field:last-child { margin-bottom: 0.3rem; }
+
+    /* ── Sound picker ──────────────────────────────────────── */
+    .sound-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .sound-btn {
+      flex: 1 1 calc(33.3% - 0.5rem);
+      padding: 0.5rem 0.3rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--steel);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+
+    .sound-btn.selected {
+      border-color: var(--action);
+      color: var(--num);
+      background: rgba(46, 95, 204, 0.1);
+    }
+
+    .sound-btn:hover:not(.selected) { border-color: #262440; color: var(--num); }
 
     /* ── TIMER SCREEN ──────────────────────────────────────── */
     #screen-timer {
@@ -303,7 +442,8 @@
     #lbl-time {
       display: flex;
       align-items: center;
-      font-family: 'DM Mono', monospace;
+      font-family: var(--digit-font);
+      font-variant-numeric: tabular-nums;
       font-weight: 300;
       font-size: calc(clamp(4.5rem, 17vmin, 10.5rem) * var(--digit-scale));
       color: var(--num);
@@ -315,12 +455,12 @@
 
     #lbl-time.t-warn {
       color: var(--amber);
-      text-shadow: 0 0 70px rgba(208, 120, 40, 0.40);
+      text-shadow: 0 0 70px rgba(255, 176, 84, 0.45);
     }
 
     #lbl-time.t-danger {
       color: var(--red);
-      text-shadow: 0 0 70px rgba(200, 56, 56, 0.50);
+      text-shadow: 0 0 70px rgba(255, 107, 107, 0.55);
     }
 
     #lbl-time.t-done {
@@ -330,7 +470,7 @@
 
     .digit {
       display: inline-block;
-      width: 0.61em;
+      width: var(--digit-w, 0.61em);
       text-align: center;
       will-change: transform, opacity;
     }
@@ -343,6 +483,17 @@
     .digit.tick {
       animation: digitDrop 0.26s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
+    /* 一時停止中: ゆっくり点滅 */
+    #lbl-time.t-paused {
+      animation: pausedBlink 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pausedBlink {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.3; }
+    }
+
 
     .t-colon {
       font-size: 0.46em;
@@ -555,6 +706,7 @@
 
 <!-- ── Setup ──────────────────────────────────── -->
 <div id="screen-setup">
+  <button class="tool-btn setup-theme" onclick="toggleTheme()" title="背景切り替え">◑</button>
   <div class="setup-wordmark">
     <h1>Countdown Timer</h1>
   </div>
@@ -565,22 +717,72 @@
   </div>
 
   <div class="field">
-    <label class="field-label">テスト時間</label>
+    <label class="field-label">テスト時間（タップして自由に入力）</label>
     <div class="time-row">
       <div class="time-unit" id="unit-h">
         <span class="unit-sub">時間</span>
-        <input type="number" id="inp-h" min="0" max="23" value="0" />
+        <input type="number" inputmode="numeric" id="inp-h" min="0" max="23" value="0" />
       </div>
       <span class="t-dot" id="dot-h">:</span>
       <div class="time-unit">
         <span class="unit-sub">分</span>
-        <input type="number" id="inp-m" min="0" max="59" value="10" />
+        <input type="number" inputmode="numeric" id="inp-m" min="0" max="59" value="10" />
       </div>
       <span class="t-dot">:</span>
       <div class="time-unit">
         <span class="unit-sub">秒</span>
-        <input type="number" id="inp-s" min="0" max="59" value="0" />
+        <input type="number" inputmode="numeric" id="inp-s" min="0" max="59" value="0" />
       </div>
+    </div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="setPreset(5)">5分</button>
+      <button class="preset-btn" onclick="setPreset(10)">10分</button>
+      <button class="preset-btn" onclick="setPreset(15)">15分</button>
+      <button class="preset-btn" onclick="setPreset(30)">30分</button>
+      <button class="preset-btn" onclick="setPreset(35)">35分</button>
+      <button class="preset-btn" onclick="setPreset(45)">45分</button>
+      <button class="preset-btn" onclick="setPreset(50)">50分</button>
+      <button class="preset-btn" onclick="setPreset(60)">60分</button>
+    </div>
+  </div>
+
+  <button class="btn-go" onclick="doSetup()">タイマーを設定する</button>
+
+  <div class="field field-color">
+    <label class="field-label">数字の色</label>
+    <div class="color-row" id="color-row"></div>
+  </div>
+
+  <button class="adv-toggle" id="adv-toggle" onclick="toggleAdv()">詳細設定（フォント・表示形式・音）▾</button>
+  <div id="adv-body">
+
+  <div class="field">
+    <label class="field-label">数字のフォント</label>
+    <div class="font-row" id="font-row">
+      <button class="font-btn selected" data-font="'Inter', sans-serif" data-w="0.61em" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Inter',sans-serif">10:08</span>
+        <span class="fb-name">標準</span>
+      </button>
+      <button class="font-btn" data-font="'Poppins', sans-serif" data-w="0.64em" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Poppins',sans-serif">10:08</span>
+        <span class="fb-name">まる</span>
+      </button>
+      <button class="font-btn" data-font="'Oswald', sans-serif" data-w="0.52em" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Oswald',sans-serif">10:08</span>
+        <span class="fb-name">ほそみ</span>
+      </button>
+      <button class="font-btn" data-font="'Rajdhani', sans-serif" data-w="0.55em" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Rajdhani',sans-serif">10:08</span>
+        <span class="fb-name">デジタル</span>
+      </button>
+      <button class="font-btn" data-font="'Orbitron', sans-serif" data-w="0.76em" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Orbitron',sans-serif">10:08</span>
+        <span class="fb-name">未来</span>
+      </button>
+      <button class="font-btn" data-font="'DSEG7-Classic', monospace" data-w="0.82em" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'DSEG7-Classic',monospace;font-size:1.1rem">10:08</span>
+        <span class="fb-name">液晶</span>
+      </button>
     </div>
   </div>
 
@@ -593,19 +795,17 @@
   </div>
 
   <div class="field">
-    <label class="field-label">数字の色</label>
-    <div class="color-row" id="color-row">
-      <button class="swatch selected" data-color="#c2d6ff" style="background:#c2d6ff;color:#c2d6ff" title="アイスブルー" onclick="selectColor(this)"></button>
-      <button class="swatch"          data-color="#a8f0c0" style="background:#a8f0c0;color:#a8f0c0" title="ミント"        onclick="selectColor(this)"></button>
-      <button class="swatch"          data-color="#d4b8ff" style="background:#d4b8ff;color:#d4b8ff" title="ラベンダー"    onclick="selectColor(this)"></button>
-      <button class="swatch"          data-color="#ffd580" style="background:#ffd580;color:#ffd580" title="ゴールド"      onclick="selectColor(this)"></button>
-      <button class="swatch"          data-color="#ff9f7f" style="background:#ff9f7f;color:#ff9f7f" title="コーラル"      onclick="selectColor(this)"></button>
-      <button class="swatch"          data-color="#2255cc" style="background:#2255cc;color:#2255cc" title="コバルト（白背景向け）"  onclick="selectColor(this)"></button>
-      <button class="swatch"          data-color="#1a9950" style="background:#1a9950;color:#1a9950" title="エメラルド（白背景向け）" onclick="selectColor(this)"></button>
+    <label class="field-label">終了音（タップで試聴）</label>
+    <div class="sound-row">
+      <button class="sound-btn selected" data-sound="musicbox"   onclick="selectSound(this)">♪ オルゴール</button>
+      <button class="sound-btn"          data-sound="piano"      onclick="selectSound(this)">♪ ピアノ</button>
+      <button class="sound-btn"          data-sound="chime"      onclick="selectSound(this)">♪ チャイム</button>
+      <button class="sound-btn"          data-sound="marimba"    onclick="selectSound(this)">♪ マリンバ</button>
+      <button class="sound-btn"          data-sound="vibraphone" onclick="selectSound(this)">♪ ビブラフォン</button>
     </div>
   </div>
 
-  <button class="btn-go" onclick="doSetup()">タイマーを設定する</button>
+  </div><!-- /adv-body -->
 </div>
 
 <!-- ── Timer ──────────────────────────────────── -->
@@ -682,6 +882,7 @@
 <script>
 // ── State ──────────────────────────────────────────────────────────
 let chosenColor = '#c2d6ff';
+let chosenSound = 'musicbox';
 let displayFmt = 'hms'; // 'hms' | 'ms'
 let totalSec = 0, remainSec = 0, hasHours = false;
 let timerID = null, running = false;
@@ -715,11 +916,149 @@ function selectFmt(el) {
   }
 }
 
-// ── Color picker ────────────────────────────────────────────────────
+// ── Color picker（背景テーマごとに別パレット・別記憶） ─────────────────
+const PALETTES = {
+  dark: [
+    ['#c2d6ff', 'アイスブルー'],
+    ['#a8f0c0', 'ミント'],
+    ['#d4b8ff', 'ラベンダー'],
+    ['#ffd580', 'ゴールド'],
+    ['#ff9f7f', 'コーラル'],
+  ],
+  light: [
+    ['#2255cc', 'コバルト'],
+    ['#1a9950', 'エメラルド'],
+    ['#6a3fb5', 'パープル'],
+    ['#b8322f', 'えんじ'],
+    ['#333a45', '墨'],
+  ],
+};
+
+let chosenColorByTheme = { dark: '#c2d6ff', light: '#2255cc' };
+
+function currentTheme() { return isLight ? 'light' : 'dark'; }
+
+function renderPalette() {
+  const row = document.getElementById('color-row');
+  row.innerHTML = '';
+  const sel = chosenColorByTheme[currentTheme()];
+  for (const [c, name] of PALETTES[currentTheme()]) {
+    const b = document.createElement('button');
+    b.className = 'swatch' + (c === sel ? ' selected' : '');
+    b.dataset.color = c;
+    b.title = name;
+    b.style.background = c;
+    b.style.color = c;
+    b.onclick = () => selectColor(b);
+    row.appendChild(b);
+  }
+}
+
+// 選択色を画面全体（数字・コロン・リング・ラベル）に反映
+function applyChosenColor() {
+  document.documentElement.style.setProperty('--num', chosenColor);
+  document.documentElement.style.setProperty('--sep', sepColor(chosenColor));
+  document.documentElement.style.setProperty('--ring', dimColor(chosenColor));
+  const mid = midColor(chosenColor);
+  document.getElementById('lbl-name').style.color = mid;
+  document.querySelector('.ov-sub').style.color = mid;
+  document.querySelector('.ov-glyph').style.color = mid;
+}
+
 function selectColor(el) {
   document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
   el.classList.add('selected');
   chosenColor = el.dataset.color;
+  chosenColorByTheme[currentTheme()] = chosenColor;
+  applyChosenColor();
+}
+
+// ── Font picker ─────────────────────────────────────────────────────
+function selectFont(el) {
+  document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.documentElement.style.setProperty('--digit-font', el.dataset.font);
+  document.documentElement.style.setProperty('--digit-w', el.dataset.w);
+}
+
+// ── Advanced settings toggle ────────────────────────────────────────
+function toggleAdv() {
+  const open = document.getElementById('adv-body').classList.toggle('open');
+  document.getElementById('adv-toggle').textContent =
+    open ? '詳細設定（フォント・表示形式・音）▴' : '詳細設定（フォント・表示形式・音）▾';
+}
+
+// ── Sound picker（選択と同時に試聴） ─────────────────────────────────
+function selectSound(el, silent) {
+  document.querySelectorAll('.sound-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  chosenSound = el.dataset.sound;
+  if (silent) return;
+  initAudio();
+  const t0 = audioCtx.currentTime + 0.05;
+  // D メジャーのアルペジオを一節
+  playNote(N.D5,  t0,        0.5, 0.5);
+  playNote(N.FS5, t0 + 0.22, 0.5, 0.5);
+  playNote(N.A5,  t0 + 0.44, 0.7, 0.5);
+}
+
+// ── Time presets ────────────────────────────────────────────────────
+function setPreset(min) {
+  if (displayFmt === 'ms' && min > 99) min = 99;
+  document.getElementById('inp-h').value = displayFmt === 'ms' ? 0 : Math.floor(min / 60);
+  document.getElementById('inp-m').value = displayFmt === 'ms' ? min : min % 60;
+  document.getElementById('inp-s').value = 0;
+}
+
+// ── Settings persistence (同一PC・同一ブラウザ内) ────────────────────
+const LS_KEY = 'cdtimer-settings';
+
+function saveSettings() {
+  try {
+    const fontBtn = document.querySelector('.font-btn.selected');
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      name: document.getElementById('inp-name').value,
+      h: +document.getElementById('inp-h').value || 0,
+      m: +document.getElementById('inp-m').value || 0,
+      s: +document.getElementById('inp-s').value || 0,
+      fmt: displayFmt,
+      colors: chosenColorByTheme,
+      font: fontBtn ? fontBtn.dataset.font : null,
+      sound: chosenSound,
+      light: isLight,
+    }));
+  } catch (_) {}
+}
+
+function restoreSettings() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (_) {}
+  if (!saved) return;
+  if (saved.fmt) {
+    const b = document.querySelector(`.fmt-btn[data-fmt="${saved.fmt}"]`);
+    if (b) selectFmt(b);
+  }
+  if (saved.name) document.getElementById('inp-name').value = saved.name;
+  // 時間は fmt 復元後にセット（selectFmt が h をリセットするため）
+  document.getElementById('inp-h').value = saved.h || 0;
+  document.getElementById('inp-m').value = saved.m || 0;
+  document.getElementById('inp-s').value = saved.s || 0;
+  if (saved.colors) {
+    chosenColorByTheme = Object.assign(chosenColorByTheme, saved.colors);
+  } else if (saved.color) {
+    // 旧形式からの引き継ぎ: どちらのパレットの色か判定して振り分け
+    const theme = PALETTES.light.some(([c]) => c === saved.color) ? 'light' : 'dark';
+    chosenColorByTheme[theme] = saved.color;
+  }
+  if (saved.font) {
+    const fb = Array.from(document.querySelectorAll('.font-btn')).find(b => b.dataset.font === saved.font);
+    if (fb) selectFont(fb);
+  }
+  if (saved.sound) {
+    const sb = document.querySelector(`.sound-btn[data-sound="${saved.sound}"]`);
+    if (sb) selectSound(sb, true);
+  }
+  if (saved.light) toggleTheme();
 }
 
 // 選択色の中間トーン（テスト名用：同系色・やや暗め）
@@ -761,6 +1100,25 @@ function dimColor(hex) {
   return `hsl(${Math.round(h * 360)}, ${Math.round(s * 65)}%, 25%)`;
 }
 
+// コロン用の明るめトーン（同系色・数字よりやや控えめ）
+function sepColor(hex) {
+  const r = parseInt(hex.slice(1,3), 16) / 255;
+  const g = parseInt(hex.slice(3,5), 16) / 255;
+  const b = parseInt(hex.slice(5,7), 16) / 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (d > 0) {
+    s = d / (l > 0.5 ? 2 - max - min : max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `hsl(${Math.round(h * 360)}, ${Math.round(s * 60)}%, 58%)`;
+}
+
 // ── Setup ───────────────────────────────────────────────────────────
 function doSetup() {
   const name = document.getElementById('inp-name').value.trim() || 'テスト';
@@ -777,15 +1135,10 @@ function doSetup() {
   hasHours = displayFmt === 'hms' && h > 0;
   remainSec = totalSec;
   prevDigits = [];
+  saveSettings();
 
-  document.documentElement.style.setProperty('--num', chosenColor);
-  document.documentElement.style.setProperty('--ring', dimColor(chosenColor));
-  document.documentElement.style.setProperty('--sep', dimColor(chosenColor));
-
+  applyChosenColor();
   document.getElementById('lbl-name').textContent = name;
-  document.getElementById('lbl-name').style.color = midColor(chosenColor);
-  document.querySelector('.ov-sub').style.color = midColor(chosenColor);
-  document.querySelector('.ov-glyph').style.color = midColor(chosenColor);
   document.getElementById('screen-setup').style.display = 'none';
   document.getElementById('screen-timer').style.display = 'flex';
 
@@ -834,9 +1187,11 @@ function resetTimer() {
 
 function setBtn(state) {
   const b = document.getElementById('btn-toggle');
+  const lbl = document.getElementById('lbl-time');
   b.classList.remove('is-running');
+  lbl.classList.remove('t-paused');
   if (state === 'running')     { b.textContent = '停止'; b.classList.add('is-running'); }
-  else if (state === 'paused') { b.textContent = '再開'; }
+  else if (state === 'paused') { b.textContent = '再開'; if (remainSec > 0) lbl.classList.add('t-paused'); }
   else                         { b.textContent = '開始'; }
 }
 
@@ -889,16 +1244,19 @@ function renderTime(instant = false) {
   });
   prevDigits = [...chars];
 
-  // Color state based on remaining ratio
+  // Color state — 5分超のタイマーは絶対時間（残り3分/2分）、短いものは割合で切替
   const ratio = totalSec > 0 ? remainSec / totalSec : 0;
+  const warnAt   = totalSec > 300 ? 180 : totalSec * 0.25;
+  const dangerAt = totalSec > 300 ? 120 : totalSec * 0.10;
   const lbl  = document.getElementById('lbl-time');
   const ring = document.getElementById('ring-fill');
 
-  let colonColor;
-  if (remainSec <= 0)     { lbl.className = 't-done';   ring.style.stroke = 'var(--red)';   colonColor = 'var(--red)'; }
-  else if (ratio <= 0.1)  { lbl.className = 't-danger'; ring.style.stroke = 'var(--red)';   colonColor = 'var(--red)'; }
-  else if (ratio <= 0.25) { lbl.className = 't-warn';   ring.style.stroke = 'var(--amber)'; colonColor = 'var(--amber)'; }
-  else                    { lbl.className = '';          ring.style.stroke = 'var(--ring)';  colonColor = 'var(--sep)'; }
+  let cls, colonColor;
+  if (remainSec <= 0)             { cls = 't-done';   ring.style.stroke = 'var(--red)';   colonColor = 'var(--red)'; }
+  else if (remainSec <= dangerAt) { cls = 't-danger'; ring.style.stroke = 'var(--red)';   colonColor = 'var(--red)'; }
+  else if (remainSec <= warnAt)   { cls = 't-warn';   ring.style.stroke = 'var(--amber)'; colonColor = 'var(--amber)'; }
+  else                            { cls = '';          ring.style.stroke = 'var(--ring)';  colonColor = 'var(--sep)'; }
+  lbl.className = cls;
   document.querySelectorAll('#lbl-time .t-colon').forEach(el => el.style.color = colonColor);
 
   // Ring offset: 0 = full ring, RING_C = empty
@@ -954,11 +1312,39 @@ function makeImpulse(duration, decayRate) {
   return buf;
 }
 
+// ── Timbres ─────────────────────────────────────────────────────────
+// harm: [周波数比, 音量, 減衰の速さ(1=本体と同じ, 小さいほど早く消える)]
+const TIMBRES = {
+  musicbox: {
+    harm: [[1, 1, 1], [2, .28, 1], [3, .13, .34], [4, .055, .2]],
+    attack: .003, settleLvl: .30, settleT: .055, ring: 2.4, ringMax: 3.2, detune: 4,
+  },
+  piano: {
+    harm: [[1, 1, 1], [2, .40, .75], [3, .15, .5], [4, .06, .35], [5, .03, .22]],
+    attack: .005, settleLvl: .55, settleT: .12, ring: 1.9, ringMax: 2.5, detune: 2,
+  },
+  chime: { // チューブラーベル風: 非整数倍音で澄んだ金属音
+    harm: [[1, 1, 1], [2.74, .32, .65], [5.4, .10, .32], [8.93, .035, .18]],
+    attack: .002, settleLvl: .45, settleT: .09, ring: 3.2, ringMax: 4.2, detune: 3,
+  },
+  marimba: { // 木の短い減衰
+    harm: [[1, 1, 1], [3.9, .22, .28], [9.2, .05, .12]],
+    attack: .002, settleLvl: .16, settleT: .05, ring: 1.0, ringMax: 1.3, detune: 3,
+  },
+  vibraphone: { // トレモロ付きの柔らかい金属音
+    harm: [[1, 1, 1], [4, .16, .55], [10, .025, .18]],
+    attack: .006, settleLvl: .55, settleT: .12, ring: 2.6, ringMax: 3.4, detune: 2,
+    tremolo: 5.5,
+  },
+};
+
 function playNote(freq, t, dur, vol) {
   if (!audioCtx || !masterGain) return;
+  const cfg = TIMBRES[chosenSound] || TIMBRES.musicbox;
 
   // Humanize velocity ±8%
   const v = vol * (0.92 + Math.random() * 0.16);
+  const ring = Math.min(dur * cfg.ring, cfg.ringMax);
 
   // Slight stereo spread per note
   const pan = audioCtx.createStereoPanner();
@@ -966,59 +1352,50 @@ function playNote(freq, t, dur, vol) {
 
   const g = audioCtx.createGain();
 
-  // Fundamental — slight random detune for analog warmth
-  const o1 = audioCtx.createOscillator();
-  o1.type = 'sine';
-  o1.frequency.value = freq;
-  o1.detune.value = (Math.random() - 0.5) * 4;
-  o1.connect(g);
+  // 倍音を重ねて音色を作る
+  const oscs = [];
+  for (const [mult, hg, rf] of cfg.harm) {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = freq * mult;
+    o.detune.value = (Math.random() - 0.5) * cfg.detune;
+    const og = audioCtx.createGain();
+    og.gain.setValueAtTime(hg, t);
+    if (rf < 1) og.gain.exponentialRampToValueAtTime(0.001, t + Math.max(ring * rf, 0.08));
+    o.connect(og); og.connect(g);
+    oscs.push(o);
+  }
 
-  // 2nd harmonic — body
-  const o2 = audioCtx.createOscillator();
-  const g2 = audioCtx.createGain();
-  o2.type = 'sine'; o2.frequency.value = freq * 2;
-  o2.detune.value = (Math.random() - 0.5) * 3;
-  g2.gain.value = 0.28;
-  o2.connect(g2); g2.connect(g);
-
-  // 3rd harmonic — metallic "ting"; decays fast like a real tine
-  const o3 = audioCtx.createOscillator();
-  const g3 = audioCtx.createGain();
-  o3.type = 'sine'; o3.frequency.value = freq * 3;
-  g3.gain.value = 0.13;
-  o3.connect(g3); g3.connect(g);
-
-  // 4th harmonic — shimmer; decays fastest
-  const o4 = audioCtx.createOscillator();
-  const g4 = audioCtx.createGain();
-  o4.type = 'sine'; o4.frequency.value = freq * 4;
-  g4.gain.value = 0.055;
-  o4.connect(g4); g4.connect(g);
+  // トレモロ（ビブラフォン用の音量ゆらぎ）
+  let lfo = null;
+  let out = g;
+  if (cfg.tremolo) {
+    const trem  = audioCtx.createGain();
+    const depth = audioCtx.createGain();
+    trem.gain.value  = 0.75;
+    depth.gain.value = 0.25;
+    lfo = audioCtx.createOscillator();
+    lfo.frequency.value = cfg.tremolo;
+    lfo.connect(depth); depth.connect(trem.gain);
+    g.connect(trem);
+    out = trem;
+  }
 
   // Route: note → pan → dry + reverb
-  g.connect(pan);
+  out.connect(pan);
   pan.connect(masterGain);
-  if (reverbNode) g.connect(reverbNode);
+  if (reverbNode) out.connect(reverbNode);
 
-  // Envelope — sharp strike, quick initial settle, long ring-out
-  const ring      = Math.min(dur * 2.4, 3.2);
-  const ringShort = Math.min(dur * 1.0, 1.1); // upper harmonics fade faster
-
+  // Envelope — strike, settle, ring-out
   g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(v, t + 0.003);
-  g.gain.exponentialRampToValueAtTime(v * 0.30, t + 0.055);
+  g.gain.linearRampToValueAtTime(v, t + cfg.attack);
+  g.gain.exponentialRampToValueAtTime(Math.max(v * cfg.settleLvl, 0.001), t + cfg.settleT);
   g.gain.exponentialRampToValueAtTime(0.001, t + ring);
 
-  // Upper harmonics: separate faster envelopes
-  g3.gain.setValueAtTime(0.13, t + 0.003);
-  g3.gain.exponentialRampToValueAtTime(0.001, t + ringShort);
-
-  g4.gain.setValueAtTime(0.055, t + 0.003);
-  g4.gain.exponentialRampToValueAtTime(0.001, t + ringShort * 0.6);
-
   const stop = t + ring + 0.06;
-  [o1, o2, o3, o4].forEach(o => { o.start(t); o.stop(stop); });
-  musicNodes.push(o1, o2, o3, o4, pan);
+  oscs.forEach(o => { o.start(t); o.stop(stop); });
+  if (lfo) { lfo.start(t); lfo.stop(stop); musicNodes.push(lfo); }
+  musicNodes.push(...oscs, pan);
 }
 
 // Canon parameters
@@ -1109,6 +1486,16 @@ function toggleTheme() {
   isLight = !isLight;
   document.body.classList.toggle('light-theme', isLight);
   document.getElementById('ring-track').style.stroke = isLight ? '#ccc8be' : '#0c1020';
+  // テーマに対応するパレットと記憶色に切り替え
+  chosenColor = chosenColorByTheme[currentTheme()];
+  applyChosenColor();
+  renderPalette();
+  // テーマだけ変えて閉じても覚えておく
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+    saved.light = isLight;
+    localStorage.setItem(LS_KEY, JSON.stringify(saved));
+  } catch (_) {}
 }
 
 // ── Fullscreen ───────────────────────────────────────────────────────
@@ -1137,11 +1524,25 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('screen-timer').style.display !== 'flex') return;
   if (e.code === 'Space') { e.preventDefault(); toggleTimer(); }
   if (e.code === 'KeyR')  { resetTimer(); }
+  // Esc で設定に戻る（全画面解除の Esc とは区別）
+  if (e.code === 'Escape' && !document.fullscreenElement) { goBack(); }
 });
 
 document.querySelectorAll('#screen-setup input').forEach(el => {
   el.addEventListener('keydown', e => { if (e.key === 'Enter') doSetup(); });
 });
+
+// 時間入力はフォーカスで全選択（上書き入力できる）
+document.querySelectorAll('.time-unit input').forEach(el => {
+  el.addEventListener('focus', () => el.select());
+});
+
+// 初期パレット描画 → 前回の設定を復元
+renderPalette();
+restoreSettings();
+chosenColor = chosenColorByTheme[currentTheme()];
+applyChosenColor();
+renderPalette();
 </script>
 </body>
 </html>

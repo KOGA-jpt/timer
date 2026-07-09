@@ -146,6 +146,13 @@
     .bell-test button:hover { border-color: #262440; color: var(--num); }
     .bell-test button.urgent:hover { border-color: var(--red); color: var(--red); }
 
+    .bell-preview {
+      margin-top: 1.8rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+
     .btn-go {
       display: block;
       width: 100%;
@@ -330,7 +337,9 @@
       </div>
     </div>
 
-    <div class="field">
+    <button class="btn-go" onclick="startRun()">スタート</button>
+
+    <div class="field bell-preview">
       <label class="field-label">ベルの音（タップで試聴）</label>
       <div class="bell-test">
         <button onclick="ringBell(1)">♪ 予鈴（1回）</button>
@@ -338,8 +347,6 @@
         <button class="urgent" onclick="ringUrgent()">♪ 強制終了（連打）</button>
       </div>
     </div>
-
-    <button class="btn-go" onclick="startRun()">スタート</button>
 
     <a class="back-link" href="index.html">← テスト用カウントダウンタイマー</a>
   </div>

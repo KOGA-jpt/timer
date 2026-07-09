@@ -1141,11 +1141,28 @@ function doSetup() {
   document.getElementById('lbl-name').textContent = name;
   document.getElementById('screen-setup').style.display = 'none';
   document.getElementById('screen-timer').style.display = 'flex';
+  fitName();
 
   setBtn('ready');
   buildDigits();
   renderTime(true);
 }
+
+// テスト名が長いときはリングに収まるまで縮小
+function fitName() {
+  const el = document.getElementById('lbl-name');
+  el.style.fontSize = ''; // いったんCSS既定値に戻してから測る
+  const maxW = Math.min(window.innerWidth, window.innerHeight) * 0.58;
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > maxW && size > 14) {
+    size -= 2;
+    el.style.fontSize = size + 'px';
+  }
+}
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('screen-timer').style.display === 'flex') fitName();
+});
 
 function goBack() {
   pauseTimer();
@@ -1244,10 +1261,12 @@ function renderTime(instant = false) {
   });
   prevDigits = [...chars];
 
-  // Color state — 5分超のタイマーは絶対時間（残り3分/2分）、短いものは割合で切替
+  // Color state — 20分以上: 残り3分/2分、5〜20分: 残り2分/1分、5分以下: 割合で切替
   const ratio = totalSec > 0 ? remainSec / totalSec : 0;
-  const warnAt   = totalSec > 300 ? 180 : totalSec * 0.25;
-  const dangerAt = totalSec > 300 ? 120 : totalSec * 0.10;
+  let warnAt, dangerAt;
+  if (totalSec >= 1200)    { warnAt = 180; dangerAt = 120; }
+  else if (totalSec > 300) { warnAt = 120; dangerAt = 60; }
+  else                     { warnAt = totalSec * 0.25; dangerAt = totalSec * 0.10; }
   const lbl  = document.getElementById('lbl-time');
   const ring = document.getElementById('ring-fill');
 
@@ -1522,28 +1541,4 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 document.addEventListener('keydown', e => {
   if (document.getElementById('screen-timer').style.display !== 'flex') return;
-  if (e.code === 'Space') { e.preventDefault(); toggleTimer(); }
-  if (e.code === 'KeyR')  { resetTimer(); }
-  // Esc で設定に戻る（全画面解除の Esc とは区別）
-  if (e.code === 'Escape' && !document.fullscreenElement) { goBack(); }
-});
-
-document.querySelectorAll('#screen-setup input').forEach(el => {
-  el.addEventListener('keydown', e => { if (e.key === 'Enter') doSetup(); });
-});
-
-// 時間入力はフォーカスで全選択（上書き入力できる）
-document.querySelectorAll('.time-unit input').forEach(el => {
-  el.addEventListener('focus', () => el.select());
-});
-
-// 初期パレット描画 → 前回の設定を復元
-renderPalette();
-restoreSettings();
-chosenColor = chosenColorByTheme[currentTheme()];
-applyChosenColor();
-renderPalette();
-</script>
-</body>
-</html>
-
+  if (e.code === 'Space') { e.preventDefault()

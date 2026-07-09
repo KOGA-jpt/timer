@@ -376,6 +376,7 @@
 let totalSec = 0, warnSec = -1;      // warnSec = 予鈴を鳴らす経過秒（-1なら無し）
 let forceMode = 'off';               // 'off' | 'elapsed' | 'over'
 let forceSec = -1;                   // 強制終了ベルを鳴らす経過秒（-1なら無し）
+let forceVals = { elapsed: 15, over: 3 }; // モードごとに入力値を記憶
 let running = false;
 let accumMs = 0;                     // 一時停止までの累積
 let startedAt = 0;                   // 再開時刻(ms)
@@ -434,6 +435,11 @@ function setPreset(min) { document.getElementById('inp-total').value = min; }
 
 function selectForceMode(el) {
   if (!el) return;
+  // 切り替え前に、今のモードの入力値を覚えておく
+  if (forceMode === 'elapsed' || forceMode === 'over') {
+    const v = +document.getElementById('inp-force').value;
+    if (v > 0) forceVals[forceMode] = v;
+  }
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   forceMode = el.dataset.fmode;
@@ -443,6 +449,7 @@ function selectForceMode(el) {
   } else {
     row.style.display = 'flex';
     document.getElementById('force-prefix').textContent = forceMode === 'elapsed' ? '経過' : '超過';
+    document.getElementById('inp-force').value = forceVals[forceMode];
   }
 }
 
@@ -455,13 +462,14 @@ function startRun() {
   const totalMin = Math.max(1, Math.min(180, +document.getElementById('inp-total').value || 0));
   const warnMin  = Math.max(0, Math.min(60,  +document.getElementById('inp-warn').value  || 0));
   const forceMin = Math.max(1, Math.min(180, +document.getElementById('inp-force').value || 0));
+  if (forceMode === 'elapsed' || forceMode === 'over') forceVals[forceMode] = forceMin;
   totalSec = totalMin * 60;
   warnSec  = (warnMin > 0 && warnMin < totalMin) ? (totalMin - warnMin) * 60 : -1;
   if (forceMode === 'elapsed')   forceSec = forceMin * 60;
   else if (forceMode === 'over') forceSec = totalSec + forceMin * 60;
   else                           forceSec = -1;
 
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: totalMin, warn: warnMin, forceMode, force: forceMin })); } catch (_) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: totalMin, warn: warnMin, forceMode, forceElapsed: forceVals.elapsed, forceOver: forceVals.over })); } catch (_) {}
 
   document.getElementById('run-title').textContent = `発表 ${totalMin}分`;
   renderSchedule();
@@ -576,7 +584,10 @@ document.addEventListener('keydown', e => {
   if (!s) return;
   if (s.total) document.getElementById('inp-total').value = s.total;
   if (s.warn != null) document.getElementById('inp-warn').value = s.warn;
-  if (s.force != null) document.getElementById('inp-force').value = s.force;
+  if (s.forceElapsed != null) forceVals.elapsed = s.forceElapsed;
+  if (s.forceOver != null) forceVals.over = s.forceOver;
+  // 旧形式（force 単一値）からの引き継ぎ
+  if (s.force != null && (s.forceMode === 'elapsed' || s.forceMode === 'over')) forceVals[s.forceMode] = s.force;
   if (s.forceMode) selectForceMode(document.querySelector(`.mode-btn[data-fmode="${s.forceMode}"]`));
 })();
 

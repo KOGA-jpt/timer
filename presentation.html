@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>発表タイマー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void:    #060710;
+      --surface: #0d0c1c;
+      --border:  #181628;
+      --num:     #c2d6ff;
+      --steel:   #5a6a9a;
+      --label:   #38426a;
+      --action:  #2e5fcc;
+      --amber:   #ffb054;
+      --red:     #ff6b6b;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--void);
+      color: var(--num);
+      min-height: 100vh;
+      display: flex;
+      padding: 1.2rem 0;
+    }
+
+    .card {
+      margin: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2.4rem 2.4rem 2rem;
+      width: min(92vw, 430px);
+    }
+
+    h1 {
+      font-weight: 300;
+      font-size: 0.95rem;
+      letter-spacing: 0.3em;
+      color: var(--steel);
+      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .field { margin-bottom: 1.7rem; }
+
+    .field-label {
+      display: block;
+      font-size: 0.92rem;
+      letter-spacing: 0.18em;
+      color: var(--steel);
+      margin-bottom: 0.7rem;
+    }
+
+    .num-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .num-row input {
+      width: 6rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--num);
+      font-family: 'Inter', sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-weight: 300;
+      font-size: 2rem;
+      text-align: center;
+      padding: 0.25rem 0.1rem;
+      outline: none;
+      cursor: text;
+      transition: border-color 0.25s;
+      -moz-appearance: textfield;
+    }
+
+    .num-row input::-webkit-inner-spin-button { display: none; }
+    .num-row input:hover { border-color: #2a3454; }
+    .num-row input:focus { border-color: var(--action); }
+
+    .num-suffix { font-size: 1rem; color: var(--steel); }
+
+    .preset-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; }
+
+    .preset-btn {
+      flex: 1 1 calc(25% - 0.4rem);
+      padding: 0.42rem 0.2rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--steel);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .preset-btn:hover { border-color: #262440; color: var(--num); }
+
+    .bell-note {
+      font-size: 0.82rem;
+      color: var(--steel);
+      line-height: 1.7;
+      margin-top: 0.4rem;
+    }
+
+    .bell-test { display: flex; gap: 0.5rem; }
+
+    .bell-test button {
+      flex: 1;
+      padding: 0.5rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--steel);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .bell-test button:hover { border-color: #262440; color: var(--num); }
+
+    .btn-go {
+      display: block;
+      width: 100%;
+      margin-top: 1.8rem;
+      padding: 0.82rem;
+      background: var(--action);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: filter 0.2s, transform 0.14s;
+    }
+
+    .btn-go:hover  { filter: brightness(1.18); transform: translateY(-1px); }
+    .btn-go:active { transform: translateY(0); }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.6rem;
+      color: var(--label);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--steel); }
+
+    /* ── Run view ── */
+    #view-run { display: none; text-align: center; }
+
+    #run-title {
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      color: var(--steel);
+      margin-bottom: 1.2rem;
+    }
+
+    #elapsed {
+      font-weight: 300;
+      font-size: 5.2rem;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      transition: color 0.6s ease;
+    }
+
+    #elapsed.warn { color: var(--amber); }
+    #elapsed.over { color: var(--red); }
+
+    #overtime {
+      min-height: 1.4em;
+      margin-top: 0.7rem;
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--red);
+      visibility: hidden;
+    }
+
+    #schedule {
+      margin-top: 1rem;
+      font-size: 0.82rem;
+      color: var(--steel);
+      line-height: 1.8;
+    }
+
+    #schedule .done { color: var(--label); text-decoration: line-through; }
+
+    .controls { display: flex; gap: 0.6rem; margin-top: 1.8rem; justify-content: center; }
+
+    .btn-ctrl {
+      border: none;
+      border-radius: 7px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: filter 0.2s, background 0.2s, color 0.2s;
+      padding: 0.68rem 1.8rem;
+    }
+
+    #btn-toggle { background: var(--action); color: #fff; }
+    #btn-toggle.running { background: transparent; border: 1px solid var(--border); color: var(--steel); }
+    #btn-reset { background: transparent; border: 1px solid var(--border); color: var(--label); }
+    #btn-reset:hover { color: var(--steel); }
+    .btn-ctrl:hover { filter: brightness(1.15); }
+
+    #btn-back {
+      display: block;
+      margin: 1.8rem auto 0;
+      background: none;
+      border: none;
+      color: var(--label);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    #btn-back:hover { color: var(--steel); }
+
+    #kbd-hint {
+      margin-top: 0.9rem;
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      color: var(--border);
+    }
+
+    @media (pointer: coarse) { #kbd-hint { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- ── 設定 ── -->
+  <div id="view-setup">
+    <h1>Presentation Timer</h1>
+
+    <div class="field">
+      <label class="field-label">発表時間（終了でベル2回）</label>
+      <div class="num-row">
+        <input type="number" inputmode="numeric" id="inp-total" min="1" max="180" value="5" />
+        <span class="num-suffix">分</span>
+      </div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="setPreset(3)">3分</button>
+        <button class="preset-btn" onclick="setPreset(5)">5分</button>
+        <button class="preset-btn" onclick="setPreset(7)">7分</button>
+        <button class="preset-btn" onclick="setPreset(9)">9分</button>
+        <button class="preset-btn" onclick="setPreset(10)">10分</button>
+        <button class="preset-btn" onclick="setPreset(15)">15分</button>
+        <button class="preset-btn" onclick="setPreset(20)">20分</button>
+        <button class="preset-btn" onclick="setPreset(30)">30分</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">予鈴（ベル1回）</label>
+      <div class="num-row">
+        <span class="num-suffix">終了の</span>
+        <input type="number" inputmode="numeric" id="inp-warn" min="0" max="60" value="1" />
+        <span class="num-suffix">分前</span>
+      </div>
+      <p class="bell-note">0にすると予鈴なし。発表時間以上の値も予鈴なしになります。</p>
+    </div>
+
+    <div class="field">
+      <label class="field-label">ベルの音（タップで試聴）</label>
+      <div class="bell-test">
+        <button onclick="ringBell(1)">♪ 予鈴（1回）</button>
+        <button onclick="ringBell(2)">♪ 本鈴（2回）</button>
+      </div>
+    </div>
+
+    <button class="btn-go" onclick="startRun()">スタート</button>
+
+    <a class="back-link" href="index.html">← テスト用カウントダウンタイマー</a>
+  </div>
+
+  <!-- ── 計測 ── -->
+  <div id="view-run">
+    <div id="run-title"></div>
+    <div id="elapsed">0:00</div>
+    <div id="overtime">超過 +0:00</div>
+    <div id="schedule"></div>
+
+    <div class="controls">
+      <button class="btn-ctrl" id="btn-toggle" onclick="toggleTimer()">一時停止</button>
+      <button class="btn-ctrl" id="btn-reset" onclick="resetTimer()">リセット</button>
+    </div>
+
+    <button id="btn-back" onclick="goBack()">← 設定に戻る</button>
+    <div id="kbd-hint">Space — 一時停止 / 再開　　R — リセット</div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let totalSec = 0, warnSec = -1;      // warnSec = 予鈴を鳴らす経過秒（-1なら無し）
+let running = false;
+let accumMs = 0;                     // 一時停止までの累積
+let startedAt = 0;                   // 再開時刻(ms)
+let tickID = null;
+let firedWarn = false, firedEnd = false;
+let lastShownSec = -1;
+
+const LS_KEY = 'presentation-timer-settings';
+
+// ── ベル音（Web Audio・卓上ベル風） ──────────────────────────────────
+let audioCtx = null, master = null;
+
+function initAudio() {
+  if (audioCtx) { if (audioCtx.state === 'suspended') audioCtx.resume(); return; }
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  master = audioCtx.createGain();
+  master.gain.value = 0.6;
+  master.connect(audioCtx.destination);
+}
+
+// 1打の「チーン」: 非整数倍音＋長い余韻
+function bellStrike(t, vol) {
+  const base = 1568; // G6 付近の澄んだ高さ
+  const partials = [[1, 1], [2.76, .45], [5.40, .18], [8.93, .08]];
+  for (const [m, g0] of partials) {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = base * m;
+    const g = audioCtx.createGain();
+    const dur = 2.8 / Math.sqrt(m); // 高い成分ほど早く消える
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol * g0, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+}
+
+function ringBell(times) {
+  initAudio();
+  const t0 = audioCtx.currentTime + 0.03;
+  for (let i = 0; i < times; i++) bellStrike(t0 + i * 0.45, 0.8);
+}
+
+// ── 設定 ────────────────────────────────────────────────────────────
+function setPreset(min) { document.getElementById('inp-total').value = min; }
+
+function fmt(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function startRun() {
+  const totalMin = Math.max(1, Math.min(180, +document.getElementById('inp-total').value || 0));
+  const warnMin  = Math.max(0, Math.min(60,  +document.getElementById('inp-warn').value  || 0));
+  totalSec = totalMin * 60;
+  warnSec  = (warnMin > 0 && warnMin < totalMin) ? (totalMin - warnMin) * 60 : -1;
+
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: totalMin, warn: warnMin })); } catch (_) {}
+
+  document.getElementById('run-title').textContent = `発表 ${totalMin}分`;
+  renderSchedule();
+
+  accumMs = 0; firedWarn = false; firedEnd = false; lastShownSec = -1;
+  document.getElementById('view-setup').style.display = 'none';
+  document.getElementById('view-run').style.display = 'block';
+  render(0);
+
+  initAudio(); // クリック時に音声を有効化しておく（ベルを確実に鳴らすため）
+  running = false;
+  startTimer();
+}
+
+function renderSchedule() {
+  const el = document.getElementById('schedule');
+  let html = '';
+  if (warnSec >= 0) html += `<span id="sch-warn">♪ 予鈴（1回）… ${fmt(warnSec)}</span><br>`;
+  html += `<span id="sch-end">♪♪ 本鈴（2回）… ${fmt(totalSec)}</span>`;
+  el.innerHTML = html;
+}
+
+// ── 計測（Date.nowベースでズレない） ─────────────────────────────────
+function elapsedMs() { return accumMs + (running ? Date.now() - startedAt : 0); }
+
+function startTimer() {
+  if (running) return;
+  running = true;
+  startedAt = Date.now();
+  document.getElementById('btn-toggle').textContent = '一時停止';
+  document.getElementById('btn-toggle').classList.add('running');
+  tickID = setInterval(tick, 200);
+}
+
+function pauseTimer() {
+  if (!running) return;
+  accumMs += Date.now() - startedAt;
+  running = false;
+  clearInterval(tickID);
+  document.getElementById('btn-toggle').textContent = '再開';
+  document.getElementById('btn-toggle').classList.remove('running');
+}
+
+function toggleTimer() { running ? pauseTimer() : startTimer(); }
+
+function resetTimer() {
+  pauseTimer();
+  accumMs = 0; firedWarn = false; firedEnd = false; lastShownSec = -1;
+  document.getElementById('btn-toggle').textContent = 'スタート';
+  renderSchedule();
+  render(0);
+}
+
+function goBack() {
+  pauseTimer();
+  document.getElementById('view-run').style.display = 'none';
+  document.getElementById('view-setup').style.display = 'block';
+}
+
+function tick() {
+  const sec = Math.floor(elapsedMs() / 1000);
+  if (sec === lastShownSec) return;
+  render(sec);
+
+  if (!firedWarn && warnSec >= 0 && sec >= warnSec) {
+    firedWarn = true;
+    ringBell(1);
+    const s = document.getElementById('sch-warn');
+    if (s) s.classList.add('done');
+  }
+  if (!firedEnd && sec >= totalSec) {
+    firedEnd = true;
+    ringBell(2);
+    const s = document.getElementById('sch-end');
+    if (s) s.classList.add('done');
+  }
+}
+
+function render(sec) {
+  lastShownSec = sec;
+  const el = document.getElementById('elapsed');
+  el.textContent = fmt(sec);
+  const over = document.getElementById('overtime');
+  if (sec >= totalSec) {
+    el.className = 'over';
+    over.style.visibility = 'visible';
+    over.textContent = '超過 +' + fmt(sec - totalSec);
+  } else {
+    el.className = (warnSec >= 0 && sec >= warnSec) ? 'warn' : '';
+    over.style.visibility = 'hidden';
+  }
+}
+
+// ── キー操作・復元 ───────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (document.getElementById('view-run').style.display !== 'block') return;
+  if (e.code === 'Space') { e.preventDefault(); toggleTimer(); }
+  if (e.code === 'KeyR')  { resetTimer(); startTimer(); }
+  if (e.code === 'Escape') { goBack(); }
+});
+
+(function restore() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (_) {}
+  if (!s) return;
+  if (s.total) document.getElementById('inp-total').value = s.total;
+  if (s.warn != null) document.getElementById('inp-warn').value = s.warn;
+})();
+
+document.querySelectorAll('#view-setup input').forEach(el => {
+  el.addEventListener('focus', () => el.select());
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') startRun(); });
+});
+</script>
+</body>
+</html>

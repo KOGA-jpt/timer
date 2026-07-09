@@ -397,8 +397,8 @@ function initAudio() {
   master.connect(audioCtx.destination);
 }
 
-// 1打の「チーン」: 非整数倍音＋長い余韻
-function bellStrike(t, vol) {
+// 1打の「チーン」: 非整数倍音。decayで余韻の長さを調整（1=通常, 小さいほど歯切れよい）
+function bellStrike(t, vol, decay = 1) {
   const base = 1568; // G6 付近の澄んだ高さ
   const partials = [[1, 1], [2.76, .45], [5.40, .18], [8.93, .08]];
   for (const [m, g0] of partials) {
@@ -406,7 +406,7 @@ function bellStrike(t, vol) {
     o.type = 'sine';
     o.frequency.value = base * m;
     const g = audioCtx.createGain();
-    const dur = 2.8 / Math.sqrt(m); // 高い成分ほど早く消える
+    const dur = (2.8 * decay) / Math.sqrt(m); // 高い成分ほど早く消える
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(vol * g0, t + 0.002);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -429,12 +429,13 @@ function ringBell(times) {
   });
 }
 
-// 強制終了: 速い連打4回 → 最後にひと打ち「チンチンチンチンチーン」
+// 強制終了: 歯切れよい連打4回 → 最後にひと打ち「チンチンチンチンチーン」
 function ringUrgent() {
   withAudio(t0 => {
-    const quick = 4;
-    for (let i = 0; i < quick; i++) bellStrike(t0 + i * 0.17, 0.78);
-    bellStrike(t0 + quick * 0.17 + 0.13, 0.95); // 締めの一打（少し強め）
+    const quick = 4, gap = 0.21;
+    // 連打は余韻を短く（decay 0.22）して1打ずつ分離させる
+    for (let i = 0; i < quick; i++) bellStrike(t0 + i * gap, 0.8, 0.22);
+    bellStrike(t0 + quick * gap + 0.14, 0.98, 1); // 締めの一打は長い余韻
   });
 }
 

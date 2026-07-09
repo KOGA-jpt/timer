@@ -89,6 +89,23 @@
 
     .num-suffix { font-size: 1rem; color: var(--steel); }
 
+    .mode-row { display: flex; gap: 0.4rem; }
+
+    .mode-btn {
+      flex: 1;
+      padding: 0.45rem 0.2rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--steel);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+
+    .mode-btn.selected { border-color: var(--red); color: var(--red); background: rgba(255,107,107,0.08); }
+    .mode-btn:hover:not(.selected) { border-color: #262440; color: var(--num); }
+
     .preset-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; }
 
     .preset-btn {
@@ -300,6 +317,20 @@
     </div>
 
     <div class="field">
+      <label class="field-label">強制終了ベル（自動・連打）</label>
+      <div class="mode-row">
+        <button class="mode-btn selected" data-fmode="off" onclick="selectForceMode(this)">オフ</button>
+        <button class="mode-btn" data-fmode="elapsed" onclick="selectForceMode(this)">経過◯分で</button>
+        <button class="mode-btn" data-fmode="over" onclick="selectForceMode(this)">超過◯分で</button>
+      </div>
+      <div class="num-row" id="force-input-row" style="margin-top:0.7rem; display:none;">
+        <span class="num-suffix" id="force-prefix">経過</span>
+        <input type="number" inputmode="numeric" id="inp-force" min="1" max="180" value="15" />
+        <span class="num-suffix">分で連打</span>
+      </div>
+    </div>
+
+    <div class="field">
       <label class="field-label">ベルの音（タップで試聴）</label>
       <div class="bell-test">
         <button onclick="ringBell(1)">♪ 予鈴（1回）</button>
@@ -336,11 +367,13 @@
 <script>
 // ── State ──────────────────────────────────────────────────────────
 let totalSec = 0, warnSec = -1;      // warnSec = 予鈴を鳴らす経過秒（-1なら無し）
+let forceMode = 'off';               // 'off' | 'elapsed' | 'over'
+let forceSec = -1;                   // 強制終了ベルを鳴らす経過秒（-1なら無し）
 let running = false;
 let accumMs = 0;                     // 一時停止までの累積
 let startedAt = 0;                   // 再開時刻(ms)
 let tickID = null;
-let firedWarn = false, firedEnd = false;
+let firedWarn = false, firedEnd = false, firedForce = false;
 let lastShownSec = -1;
 
 const LS_KEY = 'presentation-timer-settings';
@@ -392,6 +425,20 @@ function ringUrgent() {
 // ── 設定 ────────────────────────────────────────────────────────────
 function setPreset(min) { document.getElementById('inp-total').value = min; }
 
+function selectForceMode(el) {
+  if (!el) return;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  forceMode = el.dataset.fmode;
+  const row = document.getElementById('force-input-row');
+  if (forceMode === 'off') {
+    row.style.display = 'none';
+  } else {
+    row.style.display = 'flex';
+    document.getElementById('force-prefix').textContent = forceMode === 'elapsed' ? '経過' : '超過';
+  }
+}
+
 function fmt(sec) {
   const m = Math.floor(sec / 60), s = sec % 60;
   return m + ':' + String(s).padStart(2, '0');
@@ -400,15 +447,19 @@ function fmt(sec) {
 function startRun() {
   const totalMin = Math.max(1, Math.min(180, +document.getElementById('inp-total').value || 0));
   const warnMin  = Math.max(0, Math.min(60,  +document.getElementById('inp-warn').value  || 0));
+  const forceMin = Math.max(1, Math.min(180, +document.getElementById('inp-force').value || 0));
   totalSec = totalMin * 60;
   warnSec  = (warnMin > 0 && warnMin < totalMin) ? (totalMin - warnMin) * 60 : -1;
+  if (forceMode === 'elapsed')   forceSec = forceMin * 60;
+  else if (forceMode === 'over') forceSec = totalSec + forceMin * 60;
+  else                           forceSec = -1;
 
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: totalMin, warn: warnMin })); } catch (_) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: totalMin, warn: warnMin, forceMode, force: forceMin })); } catch (_) {}
 
   document.getElementById('run-title').textContent = `発表 ${totalMin}分`;
   renderSchedule();
 
-  accumMs = 0; firedWarn = false; firedEnd = false; lastShownSec = -1;
+  accumMs = 0; firedWarn = false; firedEnd = false; firedForce = false; lastShownSec = -1;
   document.getElementById('view-setup').style.display = 'none';
   document.getElementById('view-run').style.display = 'block';
   render(0);
@@ -423,6 +474,7 @@ function renderSchedule() {
   let html = '';
   if (warnSec >= 0) html += `<span id="sch-warn">♪ 予鈴（1回）… ${fmt(warnSec)}</span><br>`;
   html += `<span id="sch-end">♪♪ 本鈴（2回）… ${fmt(totalSec)}</span>`;
+  if (forceSec >= 0) html += `<br><span id="sch-force">🔔 強制終了（連打）… ${fmt(forceSec)}</span>`;
   el.innerHTML = html;
 }
 
@@ -451,7 +503,7 @@ function toggleTimer() { running ? pauseTimer() : startTimer(); }
 
 function resetTimer() {
   pauseTimer();
-  accumMs = 0; firedWarn = false; firedEnd = false; lastShownSec = -1;
+  accumMs = 0; firedWarn = false; firedEnd = false; firedForce = false; lastShownSec = -1;
   document.getElementById('btn-toggle').textContent = 'スタート';
   renderSchedule();
   render(0);
@@ -478,6 +530,12 @@ function tick() {
     firedEnd = true;
     ringBell(2);
     const s = document.getElementById('sch-end');
+    if (s) s.classList.add('done');
+  }
+  if (!firedForce && forceSec >= 0 && sec >= forceSec) {
+    firedForce = true;
+    ringUrgent();
+    const s = document.getElementById('sch-force');
     if (s) s.classList.add('done');
   }
 }
@@ -511,6 +569,8 @@ document.addEventListener('keydown', e => {
   if (!s) return;
   if (s.total) document.getElementById('inp-total').value = s.total;
   if (s.warn != null) document.getElementById('inp-warn').value = s.warn;
+  if (s.force != null) document.getElementById('inp-force').value = s.force;
+  if (s.forceMode) selectForceMode(document.querySelector(`.mode-btn[data-fmode="${s.forceMode}"]`));
 })();
 
 document.querySelectorAll('#view-setup input').forEach(el => {

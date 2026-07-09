@@ -415,19 +415,27 @@ function bellStrike(t, vol) {
   }
 }
 
-function ringBell(times) {
+// 音声の準備が整ってから鳴らす（十分な先読みで1打目が欠けないように）
+function withAudio(fn) {
   initAudio();
-  const t0 = audioCtx.currentTime + 0.03;
-  for (let i = 0; i < times; i++) bellStrike(t0 + i * 0.45, 0.8);
+  const go = () => fn(audioCtx.currentTime + 0.08);
+  if (audioCtx.state === 'suspended') audioCtx.resume().then(go).catch(go);
+  else go();
+}
+
+function ringBell(times) {
+  withAudio(t0 => {
+    for (let i = 0; i < times; i++) bellStrike(t0 + i * 0.45, 0.8);
+  });
 }
 
 // 強制終了: 速い連打4回 → 最後にひと打ち「チンチンチンチンチーン」
 function ringUrgent() {
-  initAudio();
-  const t0 = audioCtx.currentTime + 0.03;
-  const quick = 4;
-  for (let i = 0; i < quick; i++) bellStrike(t0 + i * 0.17, 0.78);
-  bellStrike(t0 + quick * 0.17 + 0.13, 0.95); // 締めの一打（少し強め）
+  withAudio(t0 => {
+    const quick = 4;
+    for (let i = 0; i < quick; i++) bellStrike(t0 + i * 0.17, 0.78);
+    bellStrike(t0 + quick * 0.17 + 0.13, 0.95); // 締めの一打（少し強め）
+  });
 }
 
 // ── 設定 ────────────────────────────────────────────────────────────

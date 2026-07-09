@@ -429,13 +429,10 @@ function ringBell(times) {
   });
 }
 
-// 強制終了: 歯切れよい連打4回 → 最後にひと打ち「チンチンチンチンチーン」
+// 強制終了: 本鈴と同じ澄んだ音色のまま5回「チーンチーンチーンチーンチーン」
 function ringUrgent() {
   withAudio(t0 => {
-    const quick = 4, gap = 0.21;
-    // 連打は余韻を短く（decay 0.22）して1打ずつ分離させる
-    for (let i = 0; i < quick; i++) bellStrike(t0 + i * gap, 0.8, 0.22);
-    bellStrike(t0 + quick * gap + 0.14, 0.98, 1); // 締めの一打は長い余韻
+    for (let i = 0; i < 5; i++) bellStrike(t0 + i * 0.45, 0.8);
   });
 }
 

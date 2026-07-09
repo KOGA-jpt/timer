@@ -112,10 +112,10 @@
       margin-top: 0.4rem;
     }
 
-    .bell-test { display: flex; gap: 0.5rem; }
+    .bell-test { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
     .bell-test button {
-      flex: 1;
+      flex: 1 1 calc(50% - 0.5rem);
       padding: 0.5rem;
       background: transparent;
       border: 1px solid var(--border);
@@ -127,6 +127,7 @@
     }
 
     .bell-test button:hover { border-color: #262440; color: var(--num); }
+    .bell-test button.urgent:hover { border-color: var(--red); color: var(--red); }
 
     .btn-go {
       display: block;
@@ -220,6 +221,24 @@
     #btn-reset:hover { color: var(--steel); }
     .btn-ctrl:hover { filter: brightness(1.15); }
 
+    #btn-force {
+      display: block;
+      margin: 1rem auto 0;
+      padding: 0.6rem 1.8rem;
+      background: transparent;
+      border: 1px solid var(--red);
+      border-radius: 7px;
+      color: var(--red);
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    #btn-force:hover { background: var(--red); color: #fff; }
+
     #btn-back {
       display: block;
       margin: 1.8rem auto 0;
@@ -285,6 +304,7 @@
       <div class="bell-test">
         <button onclick="ringBell(1)">♪ 予鈴（1回）</button>
         <button onclick="ringBell(2)">♪ 本鈴（2回）</button>
+        <button class="urgent" onclick="ringUrgent()">♪ 強制終了（連打）</button>
       </div>
     </div>
 
@@ -304,6 +324,8 @@
       <button class="btn-ctrl" id="btn-toggle" onclick="toggleTimer()">一時停止</button>
       <button class="btn-ctrl" id="btn-reset" onclick="resetTimer()">リセット</button>
     </div>
+
+    <button id="btn-force" onclick="ringUrgent()">🔔 強制終了ベルを鳴らす</button>
 
     <button id="btn-back" onclick="goBack()">← 設定に戻る</button>
     <div id="kbd-hint">Space — 一時停止 / 再開　　R — リセット</div>
@@ -356,6 +378,15 @@ function ringBell(times) {
   initAudio();
   const t0 = audioCtx.currentTime + 0.03;
   for (let i = 0; i < times; i++) bellStrike(t0 + i * 0.45, 0.8);
+}
+
+// 強制終了: 速い連打4回 → 最後にひと打ち「チンチンチンチンチーン」
+function ringUrgent() {
+  initAudio();
+  const t0 = audioCtx.currentTime + 0.03;
+  const quick = 4;
+  for (let i = 0; i < quick; i++) bellStrike(t0 + i * 0.17, 0.78);
+  bellStrike(t0 + quick * 0.17 + 0.13, 0.95); // 締めの一打（少し強め）
 }
 
 // ── 設定 ────────────────────────────────────────────────────────────

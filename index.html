@@ -1541,4 +1541,28 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 document.addEventListener('keydown', e => {
   if (document.getElementById('screen-timer').style.display !== 'flex') return;
-  if (e.code === 'Space') { e.preventDefault()
+  if (e.code === 'Space') { e.preventDefault(); toggleTimer(); }
+  if (e.code === 'KeyR')  { resetTimer(); }
+  // Esc で設定に戻る（全画面解除の Esc とは区別）
+  if (e.code === 'Escape' && !document.fullscreenElement) { goBack(); }
+});
+
+document.querySelectorAll('#screen-setup input').forEach(el => {
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') doSetup(); });
+});
+
+// 時間入力はフォーカスで全選択（上書き入力できる）
+document.querySelectorAll('.time-unit input').forEach(el => {
+  el.addEventListener('focus', () => el.select());
+});
+
+// 初期パレット描画 → 前回の設定を復元
+renderPalette();
+restoreSettings();
+chosenColor = chosenColorByTheme[currentTheme()];
+applyChosenColor();
+renderPalette();
+</script>
+</body>
+</html>
+

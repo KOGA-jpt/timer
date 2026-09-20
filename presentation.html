@@ -11,12 +11,16 @@
       --void:    #060710;
       --surface: #0d0c1c;
       --border:  #181628;
+      --edge:    #181628;   /* interactive control outlines */
+      --control: transparent; /* interactive control fill */
       --num:     #c2d6ff;
       --steel:   #5a6a9a;
       --label:   #38426a;
       --action:  #2e5fcc;
       --amber:   #ffb054;
-      --red:     #ff6b6b;
+      --red:     #ff6b6b;   /* 超過表示 — 本来の警告色 */
+      --red-quiet: #a3616a; /* 強制終了ボタン — 普段は前に出さない */
+      --red-line:  #6b444f; /* 同・枠線 */
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,12 +35,28 @@
     }
 
     .card {
+      /* 設定画面だけコントラストを上げる（計測画面は #view-run で元に戻す） */
+      --border:  #2f3558;   /* カードの外枠・区切り線 */
+      --edge:    #4d5880;   /* 入力・ボタンの枠線 */
+      --label:   #5b6894;   /* 控えめなテキスト */
+      --steel:   #6e7db0;   /* ラベル・二次テキスト */
+      --control: rgba(255,255,255,0.05);
+
       margin: auto;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 2.4rem 2.4rem 2rem;
       width: min(92vw, 430px);
+    }
+
+    /* 計測画面は従来どおりの淡いトーンのまま */
+    #view-run {
+      --border:  #181628;
+      --edge:    #181628;
+      --label:   #38426a;
+      --steel:   #5a6a9a;
+      --control: transparent;
     }
 
     h1 {
@@ -53,8 +73,8 @@
 
     .field-label {
       display: block;
-      font-size: 0.92rem;
-      letter-spacing: 0.18em;
+      font-size: 0.95rem;
+      letter-spacing: 0.06em;
       color: var(--steel);
       margin-bottom: 0.7rem;
     }
@@ -68,7 +88,7 @@
     .num-row input {
       width: 6rem;
       background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
+      border: 1px solid var(--edge);
       border-radius: 8px;
       color: var(--num);
       font-family: 'Inter', sans-serif;
@@ -84,7 +104,7 @@
     }
 
     .num-row input::-webkit-inner-spin-button { display: none; }
-    .num-row input:hover { border-color: #2a3454; }
+    .num-row input:hover { border-color: var(--steel); }
     .num-row input:focus { border-color: var(--action); }
 
     .num-suffix { font-size: 1rem; color: var(--steel); }
@@ -93,37 +113,45 @@
 
     .mode-btn {
       flex: 1;
-      padding: 0.45rem 0.2rem;
-      background: transparent;
-      border: 1px solid var(--border);
+      padding: 0.5rem 0.2rem;
+      background: var(--control);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--steel);
-      font-size: 0.82rem;
+      font-size: 0.88rem;
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s, background 0.2s;
     }
 
+    /* 「経過◯分で」「超過◯分で」= ベルが仕込まれている状態なので赤で知らせる */
     .mode-btn.selected { border-color: var(--red); color: var(--red); background: rgba(255,107,107,0.08); }
-    .mode-btn:hover:not(.selected) { border-color: #262440; color: var(--num); }
+
+    /* 「オフ」は何も仕込んでいない状態。他の設定と同じ通常の選択色にする */
+    .mode-btn.selected[data-fmode="off"] {
+      border-color: var(--action);
+      color: var(--num);
+      background: rgba(46, 95, 204, 0.1);
+    }
+    .mode-btn:hover:not(.selected) { border-color: var(--steel); color: var(--num); }
 
     .preset-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.9rem; }
 
     .preset-btn {
       flex: 1 1 calc(25% - 0.4rem);
-      padding: 0.42rem 0.2rem;
-      background: transparent;
-      border: 1px solid var(--border);
+      padding: 0.5rem 0.2rem;
+      background: var(--control);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--steel);
-      font-size: 0.82rem;
+      font-size: 0.88rem;
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
     }
 
-    .preset-btn:hover { border-color: #262440; color: var(--num); }
+    .preset-btn:hover { border-color: var(--steel); color: var(--num); }
 
     .bell-note {
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       color: var(--steel);
       line-height: 1.7;
       margin-top: 0.4rem;
@@ -133,18 +161,18 @@
 
     .bell-test button {
       flex: 1 1 calc(50% - 0.5rem);
-      padding: 0.5rem;
-      background: transparent;
-      border: 1px solid var(--border);
+      padding: 0.55rem 0.5rem;
+      background: var(--control);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--steel);
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
     }
 
-    .bell-test button:hover { border-color: #262440; color: var(--num); }
-    .bell-test button.urgent:hover { border-color: var(--red); color: var(--red); }
+    .bell-test button:hover { border-color: var(--steel); color: var(--num); }
+    .bell-test button.urgent:hover { border-color: var(--red-quiet); color: var(--red-quiet); }
 
     .bell-preview {
       margin-top: 1.8rem;
@@ -176,14 +204,20 @@
       display: block;
       text-align: center;
       margin-top: 1.6rem;
-      color: var(--label);
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
+      color: var(--steel);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
       text-decoration: none;
       transition: color 0.2s;
     }
 
-    .back-link:hover { color: var(--steel); }
+    .back-link:hover { color: var(--num); }
+
+    /* ── Keyboard focus (設定画面) ─────────────────────────── */
+    #view-setup :is(button, input, a):focus-visible {
+      outline: 2px solid var(--action);
+      outline-offset: 2px;
+    }
 
     /* ── Run view ── */
     #view-run { display: none; text-align: center; }
@@ -196,7 +230,7 @@
     }
 
     #elapsed {
-      font-weight: 300;
+      font-weight: 500;
       font-size: 5.2rem;
       font-variant-numeric: tabular-nums;
       line-height: 1;
@@ -250,18 +284,19 @@
       margin: 1rem auto 0;
       padding: 0.6rem 1.8rem;
       background: transparent;
-      border: 1px solid var(--red);
+      border: 1px solid var(--red-line);
       border-radius: 7px;
-      color: var(--red);
+      color: var(--red-quiet);
       font-family: 'Inter', sans-serif;
-      font-weight: 500;
+      font-weight: 400;
       font-size: 0.82rem;
       letter-spacing: 0.08em;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
 
-    #btn-force:hover { background: var(--red); color: #fff; }
+    #btn-force:hover  { border-color: var(--red); color: var(--red); background: rgba(255,107,107,0.08); }
+    #btn-force:active { background: var(--red); color: #fff; border-color: var(--red); }
 
     #btn-back {
       display: block;

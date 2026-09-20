@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>カウントダウンタイマー</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Inter:wght@300;400;500&family=Poppins:wght@300&family=Oswald:wght@300&family=Rajdhani:wght@300&family=Orbitron:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Fredoka:wght@500&family=Inter:wght@300;400;500&family=Orbitron:wght@400&family=Oswald:wght@300&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
   <!-- DSEG: 7セグメント液晶フォント (SIL OFL) -->
   <link href="https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css" rel="stylesheet">
   <style>
@@ -14,6 +14,8 @@
       --void:    #060710;   /* deep blue-black void */
       --surface: #0d0c1c;   /* setup card */
       --border:  #181628;   /* hairline borders */
+      --edge:    #181628;   /* interactive control outlines */
+      --control: transparent; /* interactive control fill */
       --num:     #c2d6ff;   /* cold tungsten digit color */
       --sep:     #4a5a94;   /* colon separators */
       --label:   #38426a;   /* dim labels */
@@ -32,6 +34,8 @@
       --void:    #f4f3ef;
       --surface: #eae9e4;
       --border:  #d0cdc5;
+      --edge:    #d0cdc5;
+      --control: transparent;
       --sep:     #a09890;
       --label:   #807868;
       --steel:   #585048;
@@ -48,6 +52,14 @@
     body.light-theme .tool-btn:hover {
       background: rgba(0,0,0,0.09);
       color: #1a1510;
+    }
+
+    body.light-theme #screen-setup {
+      --border:  #c4bfb4;
+      --edge:    #948c7c;
+      --label:   #6f6858;
+      --steel:   #585048;
+      --control: rgba(0,0,0,0.045);
     }
 
     /* ── Toolbar ───────────────────────────────────────────── */
@@ -67,7 +79,7 @@
       width: 2.1rem;
       height: 2.1rem;
       background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--steel);
       font-family: 'DM Mono', monospace;
@@ -93,6 +105,13 @@
 
     /* ── SETUP SCREEN ──────────────────────────────────────── */
     #screen-setup {
+      /* 設定画面だけコントラストを上げる（タイマー画面の淡い演出はそのまま） */
+      --border:  #2f3558;   /* カードの外枠・区切り線 */
+      --edge:    #4d5880;   /* 入力・ボタンの枠線 */
+      --label:   #5b6894;   /* プレースホルダなど */
+      --steel:   #6e7db0;   /* ラベル・二次テキスト */
+      --control: rgba(255,255,255,0.05);
+
       position: relative;
       /* margin:auto = 収まるときは中央、はみ出すときは切れずにスクロール */
       margin: auto;
@@ -107,6 +126,7 @@
       position: absolute;
       top: 1rem;
       right: 1rem;
+      font-size: 0.95rem;
     }
 
     .setup-wordmark {
@@ -127,8 +147,8 @@
 
     .field-label {
       display: block;
-      font-size: 0.92rem;
-      letter-spacing: 0.22em;
+      font-size: 0.95rem;
+      letter-spacing: 0.06em;
       color: var(--steel);
       text-transform: uppercase;
       margin-bottom: 0.7rem;
@@ -139,7 +159,7 @@
       width: 100%;
       background: transparent;
       border: none;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--edge);
       color: var(--num);
       font-family: 'Inter', sans-serif;
       font-size: 1.3rem;
@@ -161,8 +181,8 @@
 
     .unit-sub {
       display: block;
-      font-size: 0.85rem;
-      letter-spacing: 0.16em;
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
       color: var(--steel);
       text-transform: uppercase;
       margin-bottom: 0.45rem;
@@ -172,7 +192,7 @@
       display: block;
       width: 100%;
       background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
+      border: 1px solid var(--edge);
       border-radius: 8px;
       color: var(--num);
       font-family: var(--digit-font);
@@ -187,7 +207,7 @@
       -moz-appearance: textfield;
     }
 
-    .time-unit input:hover { border-color: #2a3454; }
+    .time-unit input:hover { border-color: var(--steel); }
     .time-unit input:focus { border-color: var(--action); background: rgba(255,255,255,0.07); }
 
     body.light-theme .time-unit input { background: rgba(0,0,0,0.04); }
@@ -205,23 +225,23 @@
 
     .preset-btn {
       flex: 1 1 calc(25% - 0.4rem);
-      padding: 0.42rem 0.2rem;
-      background: transparent;
-      border: 1px solid var(--border);
+      padding: 0.5rem 0.2rem;
+      background: var(--control);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--steel);
       font-family: 'Inter', sans-serif;
-      font-size: 0.82rem;
+      font-size: 0.88rem;
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
     }
 
-    .preset-btn:hover { border-color: #262440; color: var(--num); }
+    .preset-btn:hover { border-color: var(--steel); color: var(--num); }
 
     .t-dot {
       font-family: 'DM Mono', monospace;
       font-size: 1.5rem;
-      color: var(--sep);
+      color: var(--steel);
       padding: 0 0.2rem 0.42rem;
       flex-shrink: 0;
     }
@@ -234,13 +254,13 @@
 
     .fmt-btn {
       flex: 1;
-      padding: 0.48rem 0.5rem;
-      background: transparent;
-      border: 1px solid var(--border);
+      padding: 0.52rem 0.5rem;
+      background: var(--control);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--steel);
       font-family: 'DM Mono', monospace;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 300;
       letter-spacing: 0.06em;
       cursor: pointer;
@@ -253,7 +273,7 @@
       background: rgba(46, 95, 204, 0.1);
     }
 
-    .fmt-btn:hover:not(.selected) { border-color: #262440; color: var(--num); }
+    .fmt-btn:hover:not(.selected) { border-color: var(--steel); color: var(--num); }
 
     /* ── Color picker ──────────────────────────────────────── */
     .color-row {
@@ -293,8 +313,8 @@
       align-items: center;
       gap: 0.3rem;
       padding: 0.55rem 0.3rem 0.45rem;
-      background: transparent;
-      border: 1px solid var(--border);
+      background: var(--control);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--num);
       cursor: pointer;
@@ -303,14 +323,14 @@
 
     .font-btn .fb-sample {
       font-size: 1.35rem;
-      font-weight: 300;
+      font-weight: 500;
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
 
     .font-btn .fb-name {
-      font-size: 0.62rem;
-      letter-spacing: 0.12em;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
       color: var(--steel);
     }
 
@@ -319,7 +339,7 @@
       background: rgba(46, 95, 204, 0.1);
     }
 
-    .font-btn:hover:not(.selected) { border-color: #262440; }
+    .font-btn:hover:not(.selected) { border-color: var(--steel); }
 
     .btn-go {
       display: block;
@@ -353,8 +373,8 @@
       border-top: 1px solid var(--border);
       color: var(--steel);
       font-family: 'Inter', sans-serif;
-      font-size: 0.78rem;
-      letter-spacing: 0.12em;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
       text-align: center;
       cursor: pointer;
       transition: color 0.2s;
@@ -366,14 +386,14 @@
       display: block;
       text-align: center;
       margin-top: 1.4rem;
-      color: var(--label);
-      font-size: 0.72rem;
-      letter-spacing: 0.14em;
+      color: var(--steel);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
       text-decoration: none;
       transition: color 0.2s;
     }
 
-    .other-timer-link:hover { color: var(--steel); }
+    .other-timer-link:hover { color: var(--num); }
 
     .field-color { margin-top: 1.9rem; margin-bottom: 0.4rem; }
 
@@ -382,33 +402,47 @@
     #adv-body .field:last-child { margin-bottom: 0.3rem; }
 
     /* ── Sound picker ──────────────────────────────────────── */
-    .sound-row {
+    .sound-row,
+    .warn-row {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
     }
 
-    .sound-btn {
+    .sound-btn,
+    .warn-btn {
       flex: 1 1 calc(33.3% - 0.5rem);
-      padding: 0.5rem 0.3rem;
-      background: transparent;
-      border: 1px solid var(--border);
+      padding: 0.55rem 0.3rem;
+      background: var(--control);
+      border: 1px solid var(--edge);
       border-radius: 6px;
       color: var(--steel);
       font-family: 'Inter', sans-serif;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s, background 0.2s;
       white-space: nowrap;
     }
 
-    .sound-btn.selected {
+    .sound-btn.selected,
+    .warn-btn.selected {
       border-color: var(--action);
       color: var(--num);
       background: rgba(46, 95, 204, 0.1);
     }
 
-    .sound-btn:hover:not(.selected) { border-color: #262440; color: var(--num); }
+    .sound-btn:hover:not(.selected),
+    .warn-btn:hover:not(.selected) { border-color: var(--steel); color: var(--num); }
+
+    /* 設定した時間より長い予告は選べない */
+    .warn-btn:disabled { opacity: 0.3; cursor: default; }
+    .warn-btn:disabled:hover { border-color: var(--edge); color: var(--steel); }
+
+    /* ── Keyboard focus (設定画面) ─────────────────────────── */
+    #screen-setup :is(button, input, a):focus-visible {
+      outline: 2px solid var(--action);
+      outline-offset: 2px;
+    }
 
     /* ── TIMER SCREEN ──────────────────────────────────────── */
     #screen-timer {
@@ -457,7 +491,7 @@
       align-items: center;
       font-family: var(--digit-font);
       font-variant-numeric: tabular-nums;
-      font-weight: 300;
+      font-weight: var(--digit-weight, 500);
       font-size: calc(clamp(4.5rem, 17vmin, 10.5rem) * var(--digit-scale));
       color: var(--num);
       line-height: 1;
@@ -772,28 +806,28 @@
   <div class="field">
     <label class="field-label">数字のフォント</label>
     <div class="font-row" id="font-row">
-      <button class="font-btn selected" data-font="'Inter', sans-serif" data-w="0.61em" onclick="selectFont(this)">
+      <button class="font-btn selected" data-font="'Inter', sans-serif" data-w="0.61em" data-weight="500" onclick="selectFont(this)">
         <span class="fb-sample" style="font-family:'Inter',sans-serif">10:08</span>
         <span class="fb-name">標準</span>
       </button>
-      <button class="font-btn" data-font="'Poppins', sans-serif" data-w="0.64em" onclick="selectFont(this)">
-        <span class="fb-sample" style="font-family:'Poppins',sans-serif">10:08</span>
+      <button class="font-btn" data-font="'Fredoka', sans-serif" data-w="0.59em" data-weight="500" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Fredoka',sans-serif">10:08</span>
         <span class="fb-name">まる</span>
       </button>
-      <button class="font-btn" data-font="'Oswald', sans-serif" data-w="0.52em" onclick="selectFont(this)">
-        <span class="fb-sample" style="font-family:'Oswald',sans-serif">10:08</span>
+      <button class="font-btn" data-font="'Oswald', sans-serif" data-w="0.52em" data-weight="300" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Oswald',sans-serif;font-weight:300">10:08</span>
         <span class="fb-name">ほそみ</span>
       </button>
-      <button class="font-btn" data-font="'Rajdhani', sans-serif" data-w="0.55em" onclick="selectFont(this)">
+      <button class="font-btn" data-font="'Rajdhani', sans-serif" data-w="0.55em" data-weight="500" onclick="selectFont(this)">
         <span class="fb-sample" style="font-family:'Rajdhani',sans-serif">10:08</span>
         <span class="fb-name">デジタル</span>
       </button>
-      <button class="font-btn" data-font="'Orbitron', sans-serif" data-w="0.76em" onclick="selectFont(this)">
-        <span class="fb-sample" style="font-family:'Orbitron',sans-serif">10:08</span>
+      <button class="font-btn" data-font="'Orbitron', sans-serif" data-w="0.76em" data-weight="400" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'Orbitron',sans-serif;font-weight:400">10:08</span>
         <span class="fb-name">未来</span>
       </button>
-      <button class="font-btn" data-font="'DSEG7-Classic', monospace" data-w="0.82em" onclick="selectFont(this)">
-        <span class="fb-sample" style="font-family:'DSEG7-Classic',monospace;font-size:1.1rem">10:08</span>
+      <button class="font-btn" data-font="'DSEG7-Classic', monospace" data-w="0.82em" data-weight="400" onclick="selectFont(this)">
+        <span class="fb-sample" style="font-family:'DSEG7-Classic',monospace;font-size:1.1rem;font-weight:400">10:08</span>
         <span class="fb-name">液晶</span>
       </button>
     </div>
@@ -804,6 +838,18 @@
     <div class="fmt-row">
       <button class="fmt-btn selected" data-fmt="hms" onclick="selectFmt(this)">時：分：秒</button>
       <button class="fmt-btn" data-fmt="ms" onclick="selectFmt(this)">分：秒（最大99分）</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="field-label">予告（数字の色が変わる）</label>
+    <div class="warn-row" id="warn-row">
+      <button class="warn-btn selected" data-warn="auto" onclick="selectWarn(this)">おまかせ</button>
+      <button class="warn-btn" data-warn="60"   onclick="selectWarn(this)">1分前</button>
+      <button class="warn-btn" data-warn="120"  onclick="selectWarn(this)">2分前</button>
+      <button class="warn-btn" data-warn="180"  onclick="selectWarn(this)">3分前</button>
+      <button class="warn-btn" data-warn="300"  onclick="selectWarn(this)">5分前</button>
+      <button class="warn-btn" data-warn="600"  onclick="selectWarn(this)">10分前</button>
     </div>
   </div>
 
@@ -899,6 +945,7 @@
 let chosenColor = '#c2d6ff';
 let chosenSound = 'musicbox';
 let displayFmt = 'hms'; // 'hms' | 'ms'
+let warnPref = 'auto';  // 'auto' | 残り秒数の文字列
 let totalSec = 0, remainSec = 0, hasHours = false;
 let timerID = null, running = false;
 let prevDigits = [];
@@ -929,6 +976,36 @@ function selectFmt(el) {
     inpM.max = 59;
     if (+inpM.value > 59) inpM.value = 59;
   }
+  refreshWarnOptions();
+}
+
+// ── 予告タイミング ───────────────────────────────────────────────────
+function selectWarn(el) {
+  document.querySelectorAll('.warn-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  warnPref = el.dataset.warn;
+}
+
+// 入力中の設定時間（秒）
+function currentTotalSec() {
+  const h = +document.getElementById('inp-h').value || 0;
+  const m = +document.getElementById('inp-m').value || 0;
+  const sec = +document.getElementById('inp-s').value || 0;
+  return displayFmt === 'ms' ? m * 60 + sec : h * 3600 + m * 60 + sec;
+}
+
+// 3分のテストに「5分前」のような、テスト時間以上の予告は選べないようにする。
+// 選択済みのものが範囲外になったら「おまかせ」に戻す。
+function refreshWarnOptions() {
+  const total = currentTotalSec();
+  let fellOut = false;
+  document.querySelectorAll('.warn-btn').forEach(b => {
+    if (b.dataset.warn === 'auto') return;
+    const tooLong = total > 0 && Number(b.dataset.warn) >= total;
+    b.disabled = tooLong;
+    if (tooLong && b.classList.contains('selected')) fellOut = true;
+  });
+  if (fellOut) selectWarn(document.querySelector('.warn-btn[data-warn="auto"]'));
 }
 
 // ── Color picker（背景テーマごとに別パレット・別記憶） ─────────────────
@@ -994,6 +1071,7 @@ function selectFont(el) {
   el.classList.add('selected');
   document.documentElement.style.setProperty('--digit-font', el.dataset.font);
   document.documentElement.style.setProperty('--digit-w', el.dataset.w);
+  document.documentElement.style.setProperty('--digit-weight', el.dataset.weight);
 }
 
 // ── Advanced settings toggle ────────────────────────────────────────
@@ -1023,6 +1101,7 @@ function setPreset(min) {
   document.getElementById('inp-h').value = displayFmt === 'ms' ? 0 : Math.floor(min / 60);
   document.getElementById('inp-m').value = displayFmt === 'ms' ? min : min % 60;
   document.getElementById('inp-s').value = 0;
+  refreshWarnOptions();
 }
 
 // ── Settings persistence (同一PC・同一ブラウザ内) ────────────────────
@@ -1037,6 +1116,7 @@ function saveSettings() {
       m: +document.getElementById('inp-m').value || 0,
       s: +document.getElementById('inp-s').value || 0,
       fmt: displayFmt,
+      warn: warnPref,
       colors: chosenColorByTheme,
       font: fontBtn ? fontBtn.dataset.font : null,
       sound: chosenSound,
@@ -1072,6 +1152,10 @@ function restoreSettings() {
   if (saved.sound) {
     const sb = document.querySelector(`.sound-btn[data-sound="${saved.sound}"]`);
     if (sb) selectSound(sb, true);
+  }
+  if (saved.warn) {
+    const wb = document.querySelector(`.warn-btn[data-warn="${saved.warn}"]`);
+    if (wb) selectWarn(wb);
   }
   if (saved.light) toggleTheme();
 }
@@ -1263,11 +1347,14 @@ function renderTime(instant = false) {
   const chars = [...str];
 
   // Animate changed digits
+  // 末尾2桁＝秒はアニメーションしない。試験中ずっと正面で動き続けるのを避けるため、
+  // 分以上が変わったときだけ落とす。
   const spans = Array.from(document.querySelectorAll('#lbl-time .digit'));
+  const secondsFrom = chars.length - 2;
   chars.forEach((c, i) => {
     if (prevDigits[i] !== c) {
       spans[i].textContent = c;
-      if (!instant) {
+      if (!instant && i < secondsFrom) {
         spans[i].classList.remove('tick');
         void spans[i].offsetWidth; // force reflow for animation restart
         spans[i].classList.add('tick');
@@ -1282,6 +1369,13 @@ function renderTime(instant = false) {
   if (totalSec >= 1200)    { warnAt = 180; dangerAt = 120; }
   else if (totalSec > 300) { warnAt = 120; dangerAt = 60; }
   else                     { warnAt = totalSec * 0.25; dangerAt = totalSec * 0.10; }
+  if (warnPref !== 'auto') {
+    // 手動指定。赤が琥珀に追いついてしまうときだけ内側に引っ込める。
+    // 常に min を取ると、予告3分前を選んだときだけ「おまかせ」と赤の位置が
+    // ずれてしまう（琥珀は同じ3分前なのに赤が2分前と1分30秒前で食い違う）。
+    warnAt = Math.min(Number(warnPref), totalSec);
+    if (dangerAt >= warnAt) dangerAt = warnAt / 2;
+  }
   const lbl  = document.getElementById('lbl-time');
   const ring = document.getElementById('ring-fill');
 
@@ -1569,11 +1663,13 @@ document.querySelectorAll('#screen-setup input').forEach(el => {
 // 時間入力はフォーカスで全選択（上書き入力できる）
 document.querySelectorAll('.time-unit input').forEach(el => {
   el.addEventListener('focus', () => el.select());
+  el.addEventListener('input', refreshWarnOptions);
 });
 
 // 初期パレット描画 → 前回の設定を復元
 renderPalette();
 restoreSettings();
+refreshWarnOptions();
 chosenColor = chosenColorByTheme[currentTheme()];
 applyChosenColor();
 renderPalette();
